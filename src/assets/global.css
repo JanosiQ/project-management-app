@@ -1,0 +1,272 @@
+textarea{
+    resize: none!important;
+}
+.description{
+    background: none;
+    border: none;
+}
+.lists {
+    display: inline-flex;
+    margin: -10px;
+}
+
+.list {
+    width: 272px;
+    margin: 10px;
+    height: max-content;
+}
+
+.card {
+    padding: 5px;
+    margin: 10px !important;
+    width: auto !important;
+
+}
+.cards .card{
+    display: flex;
+    justify-content: space-between;
+    flex-direction: inherit;
+}
+
+.cards,
+.add-card,
+.add-list,
+.description {
+    cursor: pointer;
+    transition: all 0.5s;
+}
+.description:hover{
+    background-color: #222529;
+    transition: all 0.5s;
+}
+.d-block {
+    top: 0;
+    position: fixed;
+    background: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+}
+
+.list-header h4 {
+    padding: 10px 0 0 10px;
+}
+
+.fas {
+    margin: 10px;
+}
+
+.modal-card {
+    background-color: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    margin: -10px;
+}
+
+.card-details {
+    background: #282d31;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 800px;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+}
+
+.card-details .card-details-body {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.card-details .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-details .card-title {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.card-details .fa-times {
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.card-details .card-details-body {
+    margin-top: 20px;
+}
+
+.card-details h3 {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.card-details p {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.card-details .card-members .member {
+    display: inline-block;
+    border-radius: 20px;
+    font-size: 14px;
+    margin-right: 10px;
+}
+
+.card-details .comments .comment {
+    border: 1px solid #4a4a4a;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.card-details .comments .comment-header {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.card-details .comments .comment-body {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.card-details .add-comment textarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 10px;
+    font-size: 16px;
+    line-height: 1.5;
+    border-radius: 5px;
+    border: 1px solid #4a4a4a;
+    resize: vertical;
+}
+
+.card-details .add-comment button {
+    margin-top: 10px;
+}
+
+.card-details .task-list .task {
+    border: 1px solid #4a4a4a;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.card-details .task-list .task-header {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.card-details .task-list .task-body {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.card-details .task-list .form-check-label {
+    font-size: 16px;
+}
+
+.card-details .add-task {
+    margin-top: 20px;
+}
+
+.card-details .add-task .form-group {
+    margin-bottom: 10px;
+}
+
+.card-details .add-task input[type="text"],
+.card-details .add-task textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.completed {
+    text-decoration: line-through;
+}
+.add-member{
+    position: absolute;
+    right: 1rem;
+    top: 7rem;
+    background-color: rgb(34 37 41);
+
+}
+.add-member-button,
+.plus-icon {
+    cursor: pointer;
+}
+
+.btn-close-sm {
+    font-size: 12px;
+}
+
+.modal-members-list .modal-body {
+    padding: 0 10px;
+    width: fit-content;
+    background: #222529;
+}
+
+.modal-members-list .modal-header {
+    padding: 5px;
+}
+
+.modal-members-list {
+    display: contents;
+    list-style: none;
+    padding: 0;
+}
+
+.modal-members-list ul {
+    width: fit-content;
+}
+
+.modal-members-list li {
+    display: inline-grid;
+    justify-items: center;
+    padding: 7px;
+    cursor: pointer;
+}
+
+.modal-members-list li img {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    margin-right: 10px;
+}
+
+.modal-members-list li .check-icon {
+    color: green;
+}
+
+.modal-members-list li .check-icon,
+.modal-members-list li .uncheck-icon {
+    margin-left: auto;
+}
+.mwh30 {
+    max-width: 30px;
+    max-height: 30px;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: #fff !important;
+    caret-color: #fff;
+}
+  .modal-content {
+    background-color: #222529;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
