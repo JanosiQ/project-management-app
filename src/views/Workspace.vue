@@ -175,7 +175,7 @@ export default {
       this.showDeleteModal = !this.showDeleteModal; // Przełączenie flagi "showDeleteModal" (pokazanie/ukrycie modala)
       console.log('modalBoard', board);
     },
-    editBoard(board) {
+    async editBoard(board) {
       const currentName = board.name; // Aktualna nazwa tablicy
       const newName = prompt("Wpisz nową nazwę:", currentName); // Zapytanie użytkownika o nową nazwę
       if (newName !== null && newName.trim() !== "" && newName !== currentName) {
@@ -190,16 +190,16 @@ export default {
         axios
           .put(`https://cabanoss.azurewebsites.net/boards?boardId=${board.id}`, data, { headers }) // Wywołanie żądania PUT, aby zaktualizować nazwę tablicy
           .then(() => {
-            this.successMessage = 'Board name updated successfully';
-            setTimeout(() => {
-              this.successMessage = ''; // Usunięcie successMessage po 3 sekundach
-            }, 3000);
+            this.toast.success('Board name updated successfully');
           })
           .catch(error => {
-            const errorMessages = Object.values(error.response.data.errors)
-              .map(messages => messages.join('. '));
+            this.fetchUserBoards(); // Wywołanie metody do ponownego pobrania tablic użytkownika
+            const errorPopup = Object.values(error.response.data.errors)
+              .map(messages => messages.join('. '))
+              .join('. ');
             console.error(error);
-            this.errorMessage = 'Error updating board name '+errorMessages;
+            this.errorPopup = errorPopup;
+            this.toast.error(errorPopup);
           });
       }
     },
@@ -213,10 +213,7 @@ export default {
         .delete(`https://cabanoss.azurewebsites.net/boards?boardId=${boardId}`, { headers }) // Wywołanie żądania DELETE, aby usunąć tablicę
         .then(() => {
           this.boards = this.boards.filter(board => board.id !== boardId); // Usunięcie tablicy z listy tablic
-          this.successMessage = 'Board deleted successfully';
-          setTimeout(() => {
-            this.successMessage = ''; // Usunięcie successMessage po 3 sekundach
-          }, 3000);
+          this.toast.success('Board deleted successfully');
         })
         .catch(error => {
           console.error(error);

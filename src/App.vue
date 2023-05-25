@@ -19,8 +19,8 @@
               List 1
             </a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-              <li><router-link class="dropdown-item" to="/login">Login</router-link></li>
-              <li><router-link class="dropdown-item" to="/signup">Sign up!</router-link></li>
+              <li v-if="!isLoggedIn"><router-link class="dropdown-item" to="/login">Login</router-link></li>
+              <li v-if="!isLoggedIn"><router-link class="dropdown-item" to="/signup">Sign up!</router-link></li>
               <li><a class="dropdown-item" href="#">Link 1.3</a></li>
             </ul>
           </li>
@@ -65,7 +65,7 @@
           <li v-if="isLoggedIn" class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
               aria-expanded="false">
-              <img src="https://i.pravatar.cc/30?u=2" alt="Profile Picture" class="rounded-circle me-2">
+              <img src="https://via.placeholder.com/30x30" alt="Avatar" class="rounded-circle me-2">
               {{ login }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">

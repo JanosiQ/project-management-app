@@ -4,7 +4,7 @@
     <div class="members-list">
       <ul class="list-unstyled d-flex justify-content-end align-items-center">
         <li v-for="(member, index) in boardMembers" :key="index" class="member me-2">
-          <img :src="member.avatar || 'https://via.placeholder.com/30x30'" alt="Profile Picture" :title="member.login"
+          <img :src="member.avatar || 'https://via.placeholder.com/30x30'" alt="Avatar" :title="member.login"
             class="rounded-circle me-2 mwh30">
         </li>
         <li>
@@ -32,7 +32,7 @@
                       <img :src="member.avatar || 'https://via.placeholder.com/30x30'" alt="Avatar" class="me-2"
                         style="width: 32px; height: 32px; border-radius: 50%;">
                       <div>
-                        {{ member.login }} <span v-if="member.isCurrentUser"> (you)</span><br>
+                        {{ member.login }} <span v-if="member.login === this.isCurrentUser "> (you)</span><br>
                         {{ member.email }}
                       </div>
                       <div class="dropdown ms-auto">
@@ -368,7 +368,7 @@ export default {
     return {
       editingCardTitle: false,
       editedCardTitle: '',
-      boardName: 'Board name',
+      boardName: '',
       // new
       newListTitle: '',
       newCardTitle: '',
@@ -378,6 +378,7 @@ export default {
       newItemText: [],
       // is
       isEditingDescription: false,
+      isCurrentUser: null,
       // selected
       selectedList: null,
       selectedCard: false,
@@ -412,6 +413,7 @@ export default {
     const boardId = this.$route.params.boardId; // Odczytanie ID tablicy z parametrów routingu
     this.fetchLists(boardId); // Wywołanie funkcji fetchLists() z przekazanym ID tablicy
     this.fetchBoardMembers(boardId);
+    this.fetchBoardName(boardId);
   },
   methods: {
     getToken() {
@@ -425,8 +427,24 @@ export default {
         });
         this.boardMembers = response.data;
         console.log('Użytkownicy przypisani do danej tablicy', response);
+        this.isCurrentUser = localStorage.getItem('login');
       } catch (error) {
         console.error('Failed to fetch board members:', error);
+      }
+    },
+    async fetchBoardName(boardId) {
+      try {
+        const token = this.getToken();
+        const response = await axios.get(`https://cabanoss.azurewebsites.net/${boardId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.login = localStorage.getItem('login');
+        const board = response.data;
+        this.boardName = board.name;
+        console.log('Nazwa danej tablicy: ', response);
+      } catch (error) {
+        console.error('Failed to fetch board name:', error);
+        // Obsłuż błąd w przypadku niepowodzenia pobrania nazwy tablicy
       }
     },
     async fetchLists(boardId) {
@@ -598,17 +616,21 @@ export default {
     async changeRole(userId, isAdmin) {
       try {
         const token = this.getToken();
-        const boardId = this.boardId; // Zastąp wartością właściwej zmiennej boardId
+        const boardId = this.$route.params.boardId;
         const url = `https://cabanoss.azurewebsites.net/members/boards/${boardId}?userId=${userId}`;
-        const headers = { Authorization: `Bearer ${token}` };
-        const data = { isAdmin: isAdmin ? 0 : 1 }; // Zamień true na 0, a false na 1
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json' // Ustawienie nagłówka Content-Type na application/json
+        };
+        const data = isAdmin ? 0 : 1; // Zamień true na 0, a false na 1
 
-        const response = await axios.patch(url, data, { headers });
-
+        const response = await axios.patch(url, JSON.stringify(data), { headers });
+        console.log('po patchu', response);
         // Pomyślnie zaktualizowano rolę użytkownika
         // Wykonaj odpowiednie operacje po zaktualizowaniu roli
-
+        this.fetchBoardMembers(this.$route.params.boardId);
       } catch (error) {
+        this.toast.error(error.message);
         console.error('Failed to change user role:', error);
         // Obsłuż błąd w przypadku niepowodzenia zaktualizowania roli użytkownika
       }
@@ -639,9 +661,7 @@ export default {
         boardId: this.$route.params.boardId,
         name: this.newListTitle
       };
-
       const token = this.getToken();
-
       axios
         .post(`https://cabanoss.azurewebsites.net/lists?boardId=${this.$route.params.boardId}`, newList, {
           headers: { Authorization: `Bearer ${token}` }
@@ -736,11 +756,6 @@ export default {
     },
     // Metoda dodająca nową kartę
     async addNewCard() {
-      if (!this.newCardTitle) {
-        alert("Please enter a card title");
-        return;
-      }
-
       const title = this.newCardTitle;
       const listId = this.lists[this.selectedListIndex].id;
       const token = this.getToken();
@@ -749,22 +764,26 @@ export default {
         listId: listId,
         description: '',
       };
-
-      try {
-        const response = await axios.post(`https://cabanoss.azurewebsites.net/cards/lists?listId=${listId}`, newCard, {
+      axios
+        .post(`https://cabanoss.azurewebsites.net/cards/lists?listId=${listId}`, newCard, {
           headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+          this.lists[this.selectedListIndex].cards.push(newCard);
+          this.newCardTitle = '';
+          this.showAddCardModal = false;
+          this.fetchCards(this.lists[this.selectedListIndex].id);
+          console.log('Successfully added card:', response);
+        })
+        .catch(error => {
+          const errorPopup = Object.values(error.response.data.errors)
+            .map(messages => messages.join('. '))
+            .join('. ');
+          console.error(error);
+          this.errorPopup = errorPopup;
+          this.toast.error(errorPopup);
+          console.error('Failed to add card:', error);
         });
-
-        await this.$nextTick(); // Oczekuj na zaktualizowanie widoku
-
-        this.lists[this.selectedListIndex].cards.push(newCard);
-        this.newCardTitle = '';
-        this.showAddCardModal = false;
-        this.fetchCards(this.lists[this.selectedListIndex].id);
-        console.log('Successfully added card:', response);
-      } catch (error) {
-        console.error('Failed to add card:', error);
-      }
     },
     editCard(card) {
       this.selectedCard = null;

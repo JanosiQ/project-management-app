@@ -10,7 +10,11 @@
       </div>
     </div>
   </template>
-  
+  <script>
+  export default {
+    name: 'NotFound',
+  };
+  </script>
   <style>
   .card {
     width: 100%;
