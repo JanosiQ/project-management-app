@@ -32,7 +32,7 @@
                       <img :src="member.avatar || 'https://via.placeholder.com/30x30'" alt="Avatar" class="me-2"
                         style="width: 32px; height: 32px; border-radius: 50%;">
                       <div>
-                        {{ member.login }} <span v-if="member.login === this.isCurrentUser "> (you)</span><br>
+                        {{ member.login }} <span v-if="member.login === this.isCurrentUser"> (you)</span><br>
                         {{ member.email }}
                       </div>
                       <div class="dropdown ms-auto">
@@ -207,149 +207,148 @@
             @blur="saveCardTitle" @keyup.enter="saveCardTitle">
           <i class="fas fa-times" @click="hideCardDetails"></i>
         </div>
-        <div class="card-details-body">
-          <div class="card-details-section mb-4">
-            <h3><i class="fas fa-users"></i> Members <i class="fas fa-plus plus-icon"
-                @click="this.showAddMembersDialog = !this.showAddMembersDialog"></i></h3>
-            <div class="card-members">
-              <span v-for="(member, memberIndex) in selectedCard.members" :key="memberIndex" class="member me-2">
-                <img :src="boardMembers.find(member => member.id === selectedCard.members[memberIndex]).avatar"
-                  alt="Profile Picture"
-                  :title="boardMembers.find(member => member.id === selectedCard.members[memberIndex]).name"
-                  class="rounded-circle me-2 mwh30">
-              </span>
-            </div>
+        <!-- Card Assigned Members -->
+        <div class="card-details-section mb-4">
+          <h3><i class="fas fa-users"></i> Members <i class="fas fa-plus plus-icon" @click="toggleAddMembersDialog"></i>
+          </h3>
+          <div class="card-members">
+            <span v-for="(member, memberIndex) in selectedCard.members" :key="memberIndex" class="member me-2">
+              <img :src="boardMembers.find(member => member.id === selectedCard.members[memberIndex]).avatar"
+                alt="Profile Picture"
+                :title="boardMembers.find(member => member.id === selectedCard.members[memberIndex]).login"
+                class="rounded-circle me-2 mwh30">
+            </span>
           </div>
-          <!-- Board Members -->
-          <!-- <div class="modal" :class="{ 'modal-members-list': showAddMembersDialog }" @hidden="resetModal">
-            <div class="modal-body rounded">
-              <div class="modal-header">
-                <h6 class="modal-title">Board members</h6>
-                <button type="button" class="btn-close btn-close-sm" @click="showAddMembersDialog = false"
-                  aria-label="Close"></button>
-              </div>
-              <ul class="list-unstyled">
-                <li v-for="(member, memberIndex) in boardMembers" :key="memberIndex"
-                  @click="toggleMemberSelection(member.id)">
-                  <img :src="member.avatar" alt="Profile Picture" :title="member.login" class="rounded-circle me-2 mwh30">
-                  <div class="member-name">
-                    <div>
-                      <span>{{ member.login }}</span>
-                    </div>
+        </div>
+
+        <!-- Board Members -->
+        <div class="modal" :class="{ 'modal-members-list': showAddMembersDialog }" @hidden="resetModal">
+          <div class="modal-body rounded">
+            <div class="modal-header">
+              <h6 class="modal-title">Board members</h6>
+              <button type="button" class="btn-close btn-close-sm" @click="toggleAddMembersDialog"
+                aria-label="Close"></button>
+            </div>
+            <ul class="list-unstyled">
+              <li v-for="(member, memberIndex) in boardMembers" :key="memberIndex"
+                @click="toggleMemberSelection(member.id)">
+                <img :src="member.avatar" alt="Profile Picture" :title="member.login" class="rounded-circle me-2 mwh30">
+                <div class="member-name">
+                  <div>
+                    <span>{{ member.login }}</span>
                   </div>
-                  <div v-if="selectedCard.members.includes(member.id)">
-                    <span>
-                      <i class="fas fa-check-circle check-icon" @click.stop="removeMemberFromCard(member.id)"></i>
-                    </span>
-                  </div>
-                  <div v-else>
-                    <span>
-                      <i class="fas fa-check-circle uncheck-icon"></i>
-                    </span>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div> -->
-          <!-- Due date -->
-          <div class="card-details-section mb-4">
-            <h3><i class="fas fa-calendar-alt"></i> Due Date</h3>
-            <div v-if="selectedCard.dueDate">{{ selectedCard.dueDate }}</div>
-            <div v-else>
-              <button @click="editingDueDate = true" class="btn btn-primary">Add due date</button>
-            </div>
-            <div v-if="editingDueDate">
-              <input type="datetime-local" v-model="newDueDate" class="form-control mb-2">
-              <button @click="saveDueDate" class="btn btn-primary">Save</button>
-              <button @click="editingDueDate = false" class="btn btn-link">Cancel</button>
-            </div>
-          </div>
-          <!-- Description -->
-          <div class="card-details-section">
-            <h3><i class="fas fa-file-alt"></i> Description</h3>
-            <div v-if="!isEditingDescription && selectedCard.description" @click="editDescription" class="description">
-              <textarea class="form-control description">{{ selectedCard.description }}</textarea>
-            </div>
-            <div v-else>
-              <textarea v-if="isEditingDescription" v-model="newDescription" class="form-control"
-                placeholder="Add a description" @click="editDescription"></textarea>
-              <div v-else-if="!selectedCard.description" class="edit-desc px-1" @click="editDescription">
-                Add a description...
-              </div>
-              <div v-else>
-                {{ selectedCard.description }}
-              </div>
-              <div v-if="isEditingDescription">
-                <button @click="saveDescription" class="btn btn-primary mt-2 me-2">Save</button>
-                <button @click="cancelEditDescription" class="btn btn-secondary mt-2">Cancel</button>
-              </div>
-            </div>
-          </div>
-          <!-- Comments -->
-          <div class="card-details-section mb-4">
-            <h3><i class="fas fa-comments"></i> Comments</h3>
-            <div class="comments">
-              <div v-for="(comment, index) in selectedCard.comments" :key="index" class="comment mb-3">
-                <div class="comment-header">{{ comment.author }} - {{ formatDateTime(comment.createdAt) }}</div>
-                <div class="comment-body">{{ comment.text }}</div>
-              </div>
-            </div>
-            <div class="add-comment mb-3">
-              <textarea v-model="newComment" placeholder="Add a comment" class="form-control"></textarea>
-              <button @click="addComment" class="btn btn-primary mt-2">Add comment</button>
-            </div>
-          </div>
-          <!-- Checklists -->
-          <div class="card-details-section mb-4">
-            <div class="card-details-section mb-4" v-for="(checklist, index) in selectedCard.checklists" :key="index">
-              <h3><i class="fas fa-list"></i>{{ checklist.title }}</h3>
-              <ul class="checklist list-group list-unstyled">
-                <li v-for="(item, itemIndex) in checklist.items" :key="itemIndex" class="checklist-item list-group-item">
-                  <label :for="'item-' + index + '-' + itemIndex">
-                    <input type="checkbox" :id="'item-' + index + '-' + itemIndex" v-model="item.checked">
-                    <span :class="{ completed: item.checked }">{{ item.text }}</span>
-                  </label>
-                </li>
-                <li v-if="!addingItem[index]">
-                  <button @click="addingItem[index] = true" class="btn btn-primary mt-2">Add an item</button>
-                </li>
-                <li v-else>
-                  <input v-model="newItemText[index]" placeholder="Add a new item" class="form-control"
-                    @keydown.enter="addChecklistItem(index)">
-                  <button @click="addChecklistItem(index)" class="btn btn-primary mt-2">Create item</button>
-                  <button @click="addingItem[index] = false" class="btn btn-link">Cancel</button>
-                </li>
-              </ul>
-            </div>
-            <div v-if="!addingChecklist">
-              <button @click="addingChecklist = true" class="btn btn-primary mt-2">Add a checklist</button>
-            </div>
-            <div v-else>
-              <input v-model="newChecklistTitle" placeholder="Add a new checklist title" class="form-control mb-2"
-                @keydown.enter="addChecklist">
-              <button @click="addChecklist" class="btn btn-primary">Create checklist</button>
-              <button @click="addingChecklist = false" class="btn btn-link">Cancel</button>
-            </div>
-          </div>
-          <!-- Attachments -->
-          <div class="card-details-section mb-4">
-            <h3><i class="fas fa-paperclip"></i> Attachments</h3>
-            <div class="attachments">
-              <div v-for="(attachment, index) in selectedCard.attachments" :key="index" class="attachment mb-3">
-                <div class="attachment-body">
-                  <a :href="attachment.url" target="_blank">{{ attachment.name }}</a>
-                  <i class="fas fa-times remove-icon" @click="removeAttachment(index)"></i>
                 </div>
+                <div v-if="selectedCard.members.includes(member.id)">
+                  <span>
+                    <i class="fas fa-check-circle check-icon" @click.stop="removeMemberFromCard(member.id)"></i>
+                  </span>
+                </div>
+                <div v-else>
+                  <span>
+                    <i class="fas fa-check-circle uncheck-icon"></i>
+                  </span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <!-- Due date -->
+        <div class="card-details-section mb-4">
+          <h3><i class="fas fa-calendar-alt"></i> Due Date</h3>
+          <div v-if="selectedCard.dueDate">{{ selectedCard.dueDate }}</div>
+          <div v-else>
+            <button @click="editingDueDate = true" class="btn btn-primary">Add due date</button>
+          </div>
+          <div v-if="editingDueDate">
+            <input type="datetime-local" v-model="newDueDate" class="form-control mb-2">
+            <button @click="saveDueDate" class="btn btn-primary">Save</button>
+            <button @click="editingDueDate = false" class="btn btn-link">Cancel</button>
+          </div>
+        </div>
+        <!-- Description -->
+        <div class="card-details-section">
+          <h3><i class="fas fa-file-alt"></i> Description</h3>
+          <div v-if="!isEditingDescription && selectedCard.description" @click="editDescription" class="description">
+            <textarea class="form-control description">{{ selectedCard.description }}</textarea>
+          </div>
+          <div v-else>
+            <textarea v-if="isEditingDescription" v-model="newDescription" class="form-control"
+              placeholder="Add a description" @click="editDescription"></textarea>
+            <div v-else-if="!selectedCard.description" class="edit-desc px-1" @click="editDescription">
+              Add a description...
+            </div>
+            <div v-else>
+              {{ selectedCard.description }}
+            </div>
+            <div v-if="isEditingDescription">
+              <button @click="saveDescription" class="btn btn-primary mt-2 me-2">Save</button>
+              <button @click="cancelEditDescription" class="btn btn-secondary mt-2">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <!-- Comments -->
+        <div class="card-details-section mb-4">
+          <h3><i class="fas fa-comments"></i> Comments</h3>
+          <div class="comments">
+            <div v-for="(comment, index) in selectedCard.comments" :key="index" class="comment mb-3">
+              <div class="comment-header">{{ comment.author }} - {{ formatDateTime(comment.createdAt) }}</div>
+              <div class="comment-body">{{ comment.text }}</div>
+            </div>
+          </div>
+          <div class="add-comment mb-3">
+            <textarea v-model="newComment" placeholder="Add a comment" class="form-control"></textarea>
+            <button @click="addComment" class="btn btn-primary mt-2">Add comment</button>
+          </div>
+        </div>
+        <!-- Checklists -->
+        <div class="card-details-section mb-4">
+          <div class="card-details-section mb-4" v-for="(checklist, index) in selectedCard.checklists" :key="index">
+            <h3><i class="fas fa-list"></i>{{ checklist.title }}</h3>
+            <ul class="checklist list-group list-unstyled">
+              <li v-for="(item, itemIndex) in checklist.items" :key="itemIndex" class="checklist-item list-group-item">
+                <label :for="'item-' + index + '-' + itemIndex">
+                  <input type="checkbox" :id="'item-' + index + '-' + itemIndex" v-model="item.checked">
+                  <span :class="{ completed: item.checked }">{{ item.text }}</span>
+                </label>
+              </li>
+              <li v-if="!addingItem[index]">
+                <button @click="addingItem[index] = true" class="btn btn-primary mt-2">Add an item</button>
+              </li>
+              <li v-else>
+                <input v-model="newItemText[index]" placeholder="Add a new item" class="form-control"
+                  @keydown.enter="addChecklistItem(index)">
+                <button @click="addChecklistItem(index)" class="btn btn-primary mt-2">Create item</button>
+                <button @click="addingItem[index] = false" class="btn btn-link">Cancel</button>
+              </li>
+            </ul>
+          </div>
+          <div v-if="!addingChecklist">
+            <button @click="addingChecklist = true" class="btn btn-primary mt-2">Add a checklist</button>
+          </div>
+          <div v-else>
+            <input v-model="newChecklistTitle" placeholder="Add a new checklist title" class="form-control mb-2"
+              @keydown.enter="addChecklist">
+            <button @click="addChecklist" class="btn btn-primary">Create checklist</button>
+            <button @click="addingChecklist = false" class="btn btn-link">Cancel</button>
+          </div>
+        </div>
+        <!-- Attachments -->
+        <div class="card-details-section mb-4">
+          <h3><i class="fas fa-paperclip"></i> Attachments</h3>
+          <div class="attachments">
+            <div v-for="(attachment, index) in selectedCard.attachments" :key="index" class="attachment mb-3">
+              <div class="attachment-body">
+                <a :href="attachment.url" target="_blank">{{ attachment.name }}</a>
+                <i class="fas fa-times remove-icon" @click="removeAttachment(index)"></i>
               </div>
-              <div class="add-attachment mb-3">
-                <input type="file" ref="attachmentInput" @change="uploadAttachment" class="form-control-file mb-2">
-              </div>
+            </div>
+            <div class="add-attachment mb-3">
+              <input type="file" ref="attachmentInput" @change="uploadAttachment" class="form-control-file mb-2">
             </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </template>
 <script>
@@ -625,6 +624,7 @@ export default {
         const data = isAdmin ? 0 : 1; // Zamień true na 0, a false na 1
 
         const response = await axios.patch(url, JSON.stringify(data), { headers });
+        this.toast.success('Role has been changed');
         console.log('po patchu', response);
         // Pomyślnie zaktualizowano rolę użytkownika
         // Wykonaj odpowiednie operacje po zaktualizowaniu roli

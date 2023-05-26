@@ -61,10 +61,8 @@ export default {
           console.log(response);
           const token = response.data.token;
           const login = response.data.user.login;
-          const email = response.data.user.email;
           localStorage.setItem('token', token);
           localStorage.setItem('login', login);
-          localStorage.setItem('email', email);
           this.toast.success('Successfully logged in');
           this.$router.push({ path: '/' });
         })

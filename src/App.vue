@@ -100,12 +100,6 @@ export default {
   },
   data() {
     return {
-      login: '',
-      password: '',
-    }
-  },
-  data() {
-    return {
       isLoggedIn: false, // Zmienna przechowująca informację o zalogowaniu użytkownika
       login: '', // Zmienna przechowująca login użytkownika
     };
