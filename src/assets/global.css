@@ -80,7 +80,7 @@ textarea{
 
 .card-details .card-details-body {
     max-height: 80vh;
-    overflow-y: auto;
+    overflow-y: auto!important;
 }
 
 .card-details .card-header {
@@ -195,7 +195,7 @@ textarea{
 .add-member{
     position: absolute;
     right: 1rem;
-    top: 7rem;
+    top: 7.5rem;
     background-color: rgb(34 37 41);
 
 }

@@ -18,22 +18,23 @@
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 class="modal-title">Add new board member</h5>
+                  <h4 class="modal-title">Add new board member</h4>
                   <button type="button" class="btn-close" @click="showAddMemberForm"></button>
                 </div>
                 <div class="modal-body">
                   <div class="d-flex form-group mb-2">
-                    <input type="text" class="form-control me-2" placeholder="Login" v-model="newMember.login">
+                    <input type="text" class="form-control me-2" placeholder="Login" v-model="newMember.login"
+                      @keydown.enter="addMember">
                     <button type="button" class="btn btn-primary" @click="addMember">Add</button>
                   </div>
                   <div class="mt-3">
-                    <h6>Members assigned to board</h6>
+                    <h5>Members assigned to board</h5>
                     <div v-for="member in boardMembers" :key="member.id" class="mb-2 d-flex align-items-center">
-                      <img :src="member.avatar || 'https://via.placeholder.com/30x30'" alt="Avatar" class="me-2"
-                        style="width: 32px; height: 32px; border-radius: 50%;">
+                      <img :src="member.avatar || 'https://via.placeholder.com/40x40'" alt="Avatar"
+                        class="me-2 rounded-circle mwh40">
                       <div>
                         {{ member.login }} <span v-if="member.login === this.isCurrentUser"> (you)</span><br>
-                        {{ member.email }}
+                        <i>{{ member.email }}</i>
                       </div>
                       <div class="dropdown ms-auto">
                         <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="roleDropdown"
@@ -94,11 +95,11 @@
                 <li><a class="dropdown-item" @click="deleteCardModal(card)">Delete</a></li>
               </ul>
             </div>
-            <!-- Display all members asigned to the card -->
+            <!-- Display all members assigned to the card -->
             <!-- <div class="card-members">
               <span v-for="(member, memberIndex) in card.members" :key="memberIndex" class="member me-2">
-                <img :src="boardMembers.find(member => member.id === card.members[memberIndex]).avatar"
-                  alt='Profile Picture' :title="member.name" class="rounded-circle me-2 mwh30">
+                <img :src="member.avatar || 'https://via.placeholder.com/30x30'" :alt="member.login" :title="member.login"
+                  class="rounded-circle me-2 mwh30">
               </span>
             </div> -->
           </div>
@@ -139,12 +140,13 @@
               <div class="modal-body">
                 <div class="form-group">
                   <label for="newCardTitle">Card title</label>
-                  <input type="text" class="form-control" id="newCardTitle" v-model="newCardTitle">
+                  <input type="text" class="form-control" id="newCardTitle" v-model="newCardTitle"
+                    @keydown.enter="addNewCard">
                 </div>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" @click="toggleCardModal">Close</button>
-                <button type="button" class="btn btn-primary" @click="addNewCard()">Add card</button>
+                <button type="button" class="btn btn-primary" @click="addNewCard">Add card</button>
               </div>
             </div>
           </div>
@@ -166,7 +168,8 @@
           <div class="modal-body">
             <div class="form-group">
               <label for="newListTitle">List title</label>
-              <input type="text" class="form-control" id="newListTitle" v-model="newListTitle">
+              <input type="text" class="form-control" id="newListTitle" v-model="newListTitle"
+                @keydown.enter="addNewList">
             </div>
           </div>
           <div class="modal-footer">
@@ -207,143 +210,144 @@
             @blur="saveCardTitle" @keyup.enter="saveCardTitle">
           <i class="fas fa-times" @click="hideCardDetails"></i>
         </div>
-        <!-- Card Assigned Members -->
-        <div class="card-details-section mb-4">
-          <h3><i class="fas fa-users"></i> Members <i class="fas fa-plus plus-icon" @click="toggleAddMembersDialog"></i>
-          </h3>
-          <div class="card-members">
-            <span v-for="(member, memberIndex) in selectedCard.members" :key="memberIndex" class="member me-2">
-              <img :src="boardMembers.find(member => member.id === selectedCard.members[memberIndex]).avatar"
-                alt="Profile Picture"
-                :title="boardMembers.find(member => member.id === selectedCard.members[memberIndex]).login"
-                class="rounded-circle me-2 mwh30">
-            </span>
-          </div>
-        </div>
-
-        <!-- Board Members -->
-        <div class="modal" :class="{ 'modal-members-list': showAddMembersDialog }" @hidden="resetModal">
-          <div class="modal-body rounded">
-            <div class="modal-header">
-              <h6 class="modal-title">Board members</h6>
-              <button type="button" class="btn-close btn-close-sm" @click="toggleAddMembersDialog"
-                aria-label="Close"></button>
+        <div class="card-details-body">
+          <!-- Card Assigned Members -->
+          <div class="card-details-section mb-4">
+            <h3><i class="fas fa-users"></i> Members <i class="fas fa-plus" @click="showAddMembersDialog = true"></i></h3>
+            <div class="card-members">
+              <span v-for="(member, memberIndex) in selectedCard.members" :key="memberIndex" class="member me-2">
+                <img :src="member.avatar || 'https://via.placeholder.com/35x35'" :alt="member.login" :title="member.login"
+                  class="rounded-circle me-2 mwh35">
+              </span>
             </div>
-            <ul class="list-unstyled">
-              <li v-for="(member, memberIndex) in boardMembers" :key="memberIndex"
-                @click="toggleMemberSelection(member.id)">
-                <img :src="member.avatar" alt="Profile Picture" :title="member.login" class="rounded-circle me-2 mwh30">
-                <div class="member-name">
-                  <div>
-                    <span>{{ member.login }}</span>
+          </div>
+
+          <!-- Board Members -->
+          <div class="modal" :class="{ 'modal-members-list': showAddMembersDialog }" @hidden="resetModal">
+            <div class="modal-body rounded">
+              <div class="modal-header">
+                <h6 class="modal-title">Board members</h6>
+                <button type="button" class="btn-close btn-close-sm" @click="showAddMembersDialog = false"
+                  aria-label="Close"></button>
+              </div>
+              <ul class="board-members list-unstyled">
+                <li v-for="(member, memberIndex) in boardMembers" :key="memberIndex"
+                  @click="toggleMemberSelection(selectedCard.id, member.id)">
+                  <img :src="member.avatar || 'https://via.placeholder.com/30x30'" alt="Avatar" :title="member.login"
+                    class="rounded-circle me-2 mwh30">
+                  <div class="member-name">
+                    <div>
+                      <span>{{ member.login }}</span>
+                    </div>
                   </div>
-                </div>
-                <div v-if="selectedCard.members.includes(member.id)">
-                  <span>
-                    <i class="fas fa-check-circle check-icon" @click.stop="removeMemberFromCard(member.id)"></i>
-                  </span>
-                </div>
-                <div v-else>
-                  <span>
-                    <i class="fas fa-check-circle uncheck-icon"></i>
-                  </span>
-                </div>
-              </li>
-            </ul>
+                  <div>
+                    <span v-if="isMemberAssigned(member.id)">
+                      <i class="fas fa-check-circle check-icon"
+                        @click.stop="removeMemberFromCard(selectedCard.id, member.id)"></i>
+                    </span>
+                    <span v-else>
+                      <i class="fas fa-check-circle uncheck-icon"
+                        @click.stop="assignMemberToCard(selectedCard.id, member.id)"></i>
+                    </span>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
-        <!-- Due date -->
-        <div class="card-details-section mb-4">
-          <h3><i class="fas fa-calendar-alt"></i> Due Date</h3>
-          <div v-if="selectedCard.dueDate">{{ selectedCard.dueDate }}</div>
-          <div v-else>
-            <button @click="editingDueDate = true" class="btn btn-primary">Add due date</button>
+          <!-- Due date -->
+          <div class="card-details-section mb-4">
+            <h3><i class="fas fa-calendar-alt"></i> Due Date</h3>
+            <div v-if="selectedCard.dueDate">{{ selectedCard.dueDate }}</div>
+            <div v-else>
+              <button @click="editingDueDate = true" class="btn btn-primary">Add due date</button>
+            </div>
+            <div v-if="editingDueDate">
+              <input type="datetime-local" v-model="newDueDate" class="form-control mb-2">
+              <button @click="saveDueDate" class="btn btn-primary">Save</button>
+              <button @click="editingDueDate = false" class="btn btn-link">Cancel</button>
+            </div>
           </div>
-          <div v-if="editingDueDate">
-            <input type="datetime-local" v-model="newDueDate" class="form-control mb-2">
-            <button @click="saveDueDate" class="btn btn-primary">Save</button>
-            <button @click="editingDueDate = false" class="btn btn-link">Cancel</button>
-          </div>
-        </div>
-        <!-- Description -->
-        <div class="card-details-section">
-          <h3><i class="fas fa-file-alt"></i> Description</h3>
-          <div v-if="!isEditingDescription && selectedCard.description" @click="editDescription" class="description">
-            <textarea class="form-control description">{{ selectedCard.description }}</textarea>
-          </div>
-          <div v-else>
-            <textarea v-if="isEditingDescription" v-model="newDescription" class="form-control"
-              placeholder="Add a description" @click="editDescription"></textarea>
-            <div v-else-if="!selectedCard.description" class="edit-desc px-1" @click="editDescription">
-              Add a description...
+          <!-- Description -->
+          <div class="card-details-section">
+            <h3><i class="fas fa-file-alt"></i> Description</h3>
+            <div v-if="!isEditingDescription && selectedCard.description" @click="editDescription" class="description">
+              <textarea class="form-control description">{{ selectedCard.description }}</textarea>
             </div>
             <div v-else>
-              {{ selectedCard.description }}
-            </div>
-            <div v-if="isEditingDescription">
-              <button @click="saveDescription" class="btn btn-primary mt-2 me-2">Save</button>
-              <button @click="cancelEditDescription" class="btn btn-secondary mt-2">Cancel</button>
-            </div>
-          </div>
-        </div>
-        <!-- Comments -->
-        <div class="card-details-section mb-4">
-          <h3><i class="fas fa-comments"></i> Comments</h3>
-          <div class="comments">
-            <div v-for="(comment, index) in selectedCard.comments" :key="index" class="comment mb-3">
-              <div class="comment-header">{{ comment.author }} - {{ formatDateTime(comment.createdAt) }}</div>
-              <div class="comment-body">{{ comment.text }}</div>
-            </div>
-          </div>
-          <div class="add-comment mb-3">
-            <textarea v-model="newComment" placeholder="Add a comment" class="form-control"></textarea>
-            <button @click="addComment" class="btn btn-primary mt-2">Add comment</button>
-          </div>
-        </div>
-        <!-- Checklists -->
-        <div class="card-details-section mb-4">
-          <div class="card-details-section mb-4" v-for="(checklist, index) in selectedCard.checklists" :key="index">
-            <h3><i class="fas fa-list"></i>{{ checklist.title }}</h3>
-            <ul class="checklist list-group list-unstyled">
-              <li v-for="(item, itemIndex) in checklist.items" :key="itemIndex" class="checklist-item list-group-item">
-                <label :for="'item-' + index + '-' + itemIndex">
-                  <input type="checkbox" :id="'item-' + index + '-' + itemIndex" v-model="item.checked">
-                  <span :class="{ completed: item.checked }">{{ item.text }}</span>
-                </label>
-              </li>
-              <li v-if="!addingItem[index]">
-                <button @click="addingItem[index] = true" class="btn btn-primary mt-2">Add an item</button>
-              </li>
-              <li v-else>
-                <input v-model="newItemText[index]" placeholder="Add a new item" class="form-control"
-                  @keydown.enter="addChecklistItem(index)">
-                <button @click="addChecklistItem(index)" class="btn btn-primary mt-2">Create item</button>
-                <button @click="addingItem[index] = false" class="btn btn-link">Cancel</button>
-              </li>
-            </ul>
-          </div>
-          <div v-if="!addingChecklist">
-            <button @click="addingChecklist = true" class="btn btn-primary mt-2">Add a checklist</button>
-          </div>
-          <div v-else>
-            <input v-model="newChecklistTitle" placeholder="Add a new checklist title" class="form-control mb-2"
-              @keydown.enter="addChecklist">
-            <button @click="addChecklist" class="btn btn-primary">Create checklist</button>
-            <button @click="addingChecklist = false" class="btn btn-link">Cancel</button>
-          </div>
-        </div>
-        <!-- Attachments -->
-        <div class="card-details-section mb-4">
-          <h3><i class="fas fa-paperclip"></i> Attachments</h3>
-          <div class="attachments">
-            <div v-for="(attachment, index) in selectedCard.attachments" :key="index" class="attachment mb-3">
-              <div class="attachment-body">
-                <a :href="attachment.url" target="_blank">{{ attachment.name }}</a>
-                <i class="fas fa-times remove-icon" @click="removeAttachment(index)"></i>
+              <textarea v-if="isEditingDescription" v-model="newDescription" class="form-control"
+                placeholder="Add a description" @click="editDescription"></textarea>
+              <div v-else-if="!selectedCard.description" class="edit-desc px-1" @click="editDescription">
+                Add a description...
+              </div>
+              <div v-else>
+                {{ selectedCard.description }}
+              </div>
+              <div v-if="isEditingDescription">
+                <button @click="saveDescription" class="btn btn-primary mt-2 me-2">Save</button>
+                <button @click="cancelEditDescription" class="btn btn-secondary mt-2">Cancel</button>
               </div>
             </div>
-            <div class="add-attachment mb-3">
-              <input type="file" ref="attachmentInput" @change="uploadAttachment" class="form-control-file mb-2">
+          </div>
+          <!-- Comments -->
+          <div class="card-details-section mb-4">
+            <h3><i class="fas fa-comments"></i> Comments</h3>
+            <div class="comments">
+              <div v-for="(comment, index) in selectedCard.comments" :key="index" class="comment mb-3">
+                <div class="comment-header">{{ comment.author }} - {{ formatDateTime(comment.createdAt) }}</div>
+                <div class="comment-body">{{ comment.text }}</div>
+              </div>
+            </div>
+            <div class="add-comment mb-3">
+              <textarea v-model="newComment" placeholder="Add a comment" class="form-control"></textarea>
+              <button @click="addComment" class="btn btn-primary mt-2">Add comment</button>
+            </div>
+          </div>
+          <!-- Checklists -->
+          <div class="card-details-section mb-4">
+            <div class="card-details-section mb-4" v-for="(checklist, index) in selectedCard.checklists" :key="index">
+              <h3><i class="fas fa-list"></i>{{ checklist.name }}</h3>
+              <ul class="checklist list-group list-unstyled">
+                <li v-for="(item, itemIndex) in checklist.items" :key="itemIndex" class="checklist-item list-group-item">
+                  <label :for="'item-' + index + '-' + itemIndex">
+                    <input type="checkbox" :id="'item-' + index + '-' + itemIndex" v-model="item.checked">
+                    <span :class="{ completed: item.checked }">{{ item.text }}</span>
+                  </label>
+                </li>
+                <li v-if="!addingItem[index]">
+                  <button @click="addingItem[index] = true" class="btn btn-primary mt-2">Add an item</button>
+                </li>
+                <li v-else>
+                  <input v-model="newItemText[index]" placeholder="Add a new item" class="form-control"
+                    @keydown.enter="addChecklistItem(index)">
+                  <button @click="addChecklistItem(index)" class="btn btn-primary mt-2">Create item</button>
+                  <button @click="addingItem[index] = false" class="btn btn-link">Cancel</button>
+                </li>
+              </ul>
+            </div>
+            <div v-if="!addingChecklist">
+              <button @click="addingChecklist = true" class="btn btn-primary mt-2">Add a checklist</button>
+            </div>
+            <div v-else>
+              <input v-model="newChecklistTitle" placeholder="Add a new checklist title" class="form-control mb-2"
+                @keydown.enter="addChecklist">
+              <button @click="addChecklist" class="btn btn-primary">Create checklist</button>
+              <button @click="addingChecklist = false" class="btn btn-link">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Attachments -->
+          <div class="card-details-section mb-4">
+            <h3><i class="fas fa-paperclip"></i> Attachments</h3>
+            <div class="attachments">
+              <div v-for="(attachment, index) in selectedCard.attachments" :key="index" class="attachment mb-3">
+                <div class="attachment-body">
+                  <a :href="attachment.url" target="_blank">{{ attachment.name }}</a>
+                  <i class="fas fa-times remove-icon" @click="removeAttachment(index)"></i>
+                </div>
+              </div>
+              <div class="add-attachment mb-3">
+                <input type="file" ref="attachmentInput" @change="uploadAttachment" class="form-control-file mb-2">
+              </div>
             </div>
           </div>
         </div>
@@ -483,16 +487,24 @@ export default {
         console.error('Failed to fetch cards:', error);
       }
     },
-    async fetchCardLists(cardId) {
+    async fetchCardMembers(cardId) {
       try {
         const token = this.getToken();
-        const response = await axios.get(`https://cabanoss.azurewebsites.net/lists/cards/${cardId}`, {
+        const response = await axios.get(`https://cabanoss.azurewebsites.net/members/cards?cardId=${cardId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        this.cardLists = response.data;
-        console.log(response);
+
+        // Znajdź kartę na podstawie cardId
+        const card = this.lists.flatMap(list => list.cards).find(card => card.id === cardId);
+
+        if (card) {
+          card.members = response.data;
+          console.log('Członkowie karty pobrani z serwera:', card.members);
+        } else {
+          console.error('Failed to fetch card members: Invalid cardId');
+        }
       } catch (error) {
-        console.error('Failed to fetch card lists:', error);
+        console.error('Failed to fetch card members:', error);
       }
     },
     async fetchCardComments(cardId) {
@@ -518,12 +530,49 @@ export default {
     async fetchCardChecklists(cardId) {
       try {
         const token = this.getToken();
-        const response = await axios.get(`https://cabanoss.azurewebsites.net/tasks/cards/${cardId}`, {
+        const response = await axios.get(`https://cabanoss.azurewebsites.net/tasks/cards?cardId=${cardId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        this.cardChecklists = response.data;
+
+        // Znajdź kartę na podstawie cardId
+        const card = this.lists.flatMap(list => list.cards).find(card => card.id === cardId);
+
+        if (card) {
+          card.checklists = response.data;
+          console.log('Zadania pobrane z serwera:', card.checklists);
+        } else {
+          console.error('Failed to fetch card details: Invalid cardId');
+        }
       } catch (error) {
-        console.error('Failed to fetch card checklists:', error);
+        console.error('Failed to fetch card details:', error);
+      }
+    },
+    async fetchCardChecklistItems(taskId) {
+      try {
+        const token = this.getToken();
+        const response = await axios.get(`https://cabanoss.azurewebsites.net/elements/tasks?taskId=${taskId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // Znajdź kartę na podstawie taskId
+        const card = this.lists.flatMap(list => list.cards).find(card => card.id === taskId);
+
+        if (card) {
+          // Aktualizuj elementy checklist
+          card.checklists.forEach(checklist => {
+            const checklistItems = response.data.filter(item => item.checklistId === checklist.id);
+            checklist.items = checklistItems.map(item => ({
+              id: item.id,
+              description: item.description,
+              isComplete: item.isComplete
+            }));
+          });
+          console.log('Elementy checklist pobrane z serwera:', card.checklists);
+        } else {
+          console.error('Failed to fetch card checklist items: Invalid taskId');
+        }
+      } catch (error) {
+        console.error('Failed to fetch card checklist items:', error);
       }
     },
     async fetchCardAttachments(cardId) {
@@ -840,17 +889,49 @@ export default {
     addMemberToCard(memberId) {
       this.selectedCard.members.push(memberId);
     },
-    removeMemberFromCard(memberId) {
-      const index = this.selectedCard.members.indexOf(memberId);
-      if (index !== -1) {
-        this.selectedCard.members.splice(index, 1);
+    isMemberAssigned(memberId) {
+      return this.selectedCard.members && this.selectedCard.members.some(member => member.id === memberId);
+    },
+
+    async toggleMemberSelection(cardId, memberId) {
+      try {
+        const token = this.getToken();
+
+        if (this.isMemberAssigned(memberId)) {
+          await this.removeMemberFromCard(cardId, memberId, token);
+        } else {
+          await this.assignMemberToCard(cardId, memberId, token);
+        }
+
+        // Pobierz aktualizacje członków karty
+        await this.fetchCardMembers(cardId);
+      } catch (error) {
+        console.error('Failed to toggle member selection:', error);
       }
     },
-    toggleMemberSelection(memberId) {
-      if (this.selectedCard.members.includes(memberId)) {
-        this.removeMemberFromCard(memberId);
-      } else {
-        this.addMemberToCard(memberId);
+
+    async removeMemberFromCard(cardId, userId) {
+      const token = this.getToken();
+      try {
+        await axios.delete(`https://cabanoss.azurewebsites.net/members/cards/${cardId}?userId=${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        await this.fetchCardMembers(cardId); // Aktualizuj listę członków karty
+      } catch (error) {
+        console.error('Failed to remove member from card:', error);
+      }
+    },
+
+    async assignMemberToCard(cardId, userId) {
+      const token = this.getToken();
+      try {
+        await axios.post(`https://cabanoss.azurewebsites.net/members/cards/${cardId}?userId=${userId}`, null, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        await this.fetchCardMembers(cardId);// Aktualizuj listę członków karty
+        
+      } catch (error) {
+        console.error('Failed to assign member to card:', error);
       }
     },
     addDueDate() {
@@ -922,8 +1003,30 @@ export default {
     showCardDetails(card) {
       this.selectedCard = card;
       const cardId = this.selectedCard.id;
+
+      this.fetchCardMembers(cardId).then(() => {
+        console.log('Użytkownicy wybranej karty', card.members);
+      });
+
       this.fetchCardComments(cardId).then(() => {
-        console.log('Wybrana karta', this.selectedCard);
+        console.log('Komentarze wybranej karty', card.comments);
+      });
+
+      this.fetchCardChecklists(cardId).then(() => {
+        console.log('Zadania wybranej karty', card.checklists);
+
+        // Utwórz tablicę z żądaniami fetchCardChecklistItems
+        const checklistItemRequests = card.checklists.map(checklist => this.fetchCardChecklistItems(checklist.id));
+
+        // Wykonaj wszystkie żądania asynchroniczne i oczekuj na ich zakończenie
+        Promise.all(checklistItemRequests)
+          .then(() => {
+            // Wykorzystaj zaktualizowane dane checklist
+            console.log('Wszystkie elementy checklist:', card.checklists.flatMap(checklist => checklist.items));
+          })
+          .catch(error => {
+            console.error('Failed to fetch card checklist items:', error);
+          });
       });
     },
     // Metoda ukrywająca modal ze szczegółami karty
@@ -934,6 +1037,7 @@ export default {
       this.newTaskDescription = '';
       this.newDescription = '';
       this.newChecklistTitle = '',
+        this.showAddMembersDialog = false,
         this.isEditingDescription = false,
         this.newItemText = [],
         this.attachment = []
@@ -973,27 +1077,60 @@ export default {
       return new Date(dateTime).toLocaleString(undefined, options);
     },
     // Metoda dodająca checklistę do karty
-    addChecklist() {
+    async addChecklist() {
       if (this.newChecklistTitle) {
-        const newChecklist = {
-          title: this.newChecklistTitle,
-          items: [],
-        };
-        this.selectedCard.checklists.push(newChecklist);
-        this.newChecklistTitle = '';
-        this.addingChecklist = false;
+        try {
+          const token = this.getToken();
+          const url = `https://cabanoss.azurewebsites.net/tasks/cards?cardId=${this.selectedCard.id}`;
+          const headers = {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          };
+          const data = {
+            name: this.newChecklistTitle,
+          };
+
+          const response = await axios.post(url, data, { headers });
+
+          // Dodaj nowe zadanie (checklistę) do wybranej karty na podstawie odpowiedzi z serwera
+          const newChecklist = response.data;
+
+          this.newChecklistTitle = '';
+          this.addingChecklist = false;
+          this.fetchCardChecklists(this.selectedCard.id);
+          console.log('Dodano nowe zadanie (checklistę):', newChecklist);
+        } catch (error) {
+          const errorPopup = Object.values(error.response.data.errors)
+            .map(messages => messages.join('. '))
+            .join('. ');
+          console.error(error);
+          this.errorPopup = errorPopup;
+          this.toast.error(errorPopup);
+          console.error('Failed to add checklist:', error);
+        }
       }
     },
     // Metoda dodająca element do checklisty
-    addChecklistItem(checklistIndex) {
-      if (this.newItemText[checklistIndex]) {
-        const newItem = {
-          text: this.newItemText[checklistIndex],
-          checked: false,
-        };
-        this.selectedCard.checklists[checklistIndex].items.push(newItem);
+    async addChecklistItem(checklistIndex) {
+      const checklist = this.selectedCard.checklists[checklistIndex];
+      const newItemText = this.newItemText[checklistIndex];
+
+      try {
+        const token = this.getToken();
+        const response = await axios.post(`https://cabanoss.azurewebsites.net/elements/tasks?taskId=${this.checklist.id}`, {
+          checklistId: checklist.id,
+          text: newItemText
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const newItem = response.data;
+        checklist.items.push(newItem);
         this.newItemText[checklistIndex] = '';
-        this.addingItem[checklistIndex] = [];
+        this.addingItem[checklistIndex] = false;
+        console.log('Nowy element checklists dodany:', newItem);
+      } catch (error) {
+        console.error('Failed to add checklist item:', error);
       }
     },
     uploadAttachment() {
