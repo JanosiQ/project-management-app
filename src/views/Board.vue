@@ -207,27 +207,28 @@
           <div v-if="!editingCardTitle" class="card-title h5 mb-0" @click="startEditingCardTitle">{{ selectedCard.name }}
           </div>
           <input v-else type="text" class="card-title h5 mb-0 form-control" v-model="editedCardTitle"
-            @blur="saveCardTitle" @keyup.enter="saveCardTitle">
+            @blur="saveCardTitle" @keyup.enter="saveCardTitle" @focus="editingCardTitle = true">
           <i class="fas fa-times" @click="hideCardDetails"></i>
         </div>
         <div class="card-details-body">
           <!-- Card Assigned Members -->
           <div class="card-details-section mb-4">
-            <h3><i class="fas fa-users"></i> Members <i class="fas fa-plus" @click="showAddMembersDialog = true"></i></h3>
-            <div class="card-members">
+            <h3><i class="fas fa-users"></i> Members </h3>
+            <div class="card-members ms-2">
               <span v-for="(member, memberIndex) in selectedCard.members" :key="memberIndex" class="member me-2">
                 <img :src="member.avatar || 'https://via.placeholder.com/35x35'" :alt="member.login" :title="member.login"
                   class="rounded-circle me-2 mwh35">
               </span>
+              <i class="fas fa-plus-circle member me-2" @click="showAddMembersCard = true"></i>
             </div>
           </div>
 
           <!-- Board Members -->
-          <div class="modal" :class="{ 'modal-members-list': showAddMembersDialog }" @hidden="resetModal">
+          <div class="modal" :class="{ 'modal-members-list': showAddMembersCard }" @hidden="resetModal">
             <div class="modal-body rounded">
               <div class="modal-header">
                 <h6 class="modal-title">Board members</h6>
-                <button type="button" class="btn-close btn-close-sm" @click="showAddMembersDialog = false"
+                <button type="button" class="btn-close btn-close-sm" @click="showAddMembersCard = false"
                   aria-label="Close"></button>
               </div>
               <ul class="board-members list-unstyled">
@@ -257,14 +258,24 @@
           <!-- Due date -->
           <div class="card-details-section mb-4">
             <h3><i class="fas fa-calendar-alt"></i> Due Date</h3>
-            <div v-if="selectedCard.dueDate">{{ selectedCard.dueDate }}</div>
-            <div v-else>
-              <button @click="editingDueDate = true" class="btn btn-primary">Add due date</button>
+            <div class="ms-2" v-if="selectedCard.deadline">
+              <div v-if="!editingDueDate" class="due-date">
+                <span>{{ formatDueDate(selectedCard.deadline) }}</span>
+                <button @click="editingDueDate = true" class="btn btn-link">Edit</button>
+              </div>
+              <div v-else>
+                <input type="date" v-model="newDueDate" class="form-control mb-2">
+                <button @click="saveDueDate" class="btn btn-primary">Save</button>
+                <button @click="editingDueDate = false" class="btn btn-link">Cancel</button>
+              </div>
             </div>
-            <div v-if="editingDueDate">
-              <input type="datetime-local" v-model="newDueDate" class="form-control mb-2">
+            <div v-else-if="!selectedCard.deadline && editingDueDate">
+              <input type="date" v-model="newDueDate" class="form-control mb-2">
               <button @click="saveDueDate" class="btn btn-primary">Save</button>
               <button @click="editingDueDate = false" class="btn btn-link">Cancel</button>
+            </div>
+            <div v-else>
+              <button @click="editingDueDate = true" class="btn btn-primary">Add due date</button>
             </div>
           </div>
           <!-- Description -->
@@ -276,7 +287,7 @@
             <div v-else>
               <textarea v-if="isEditingDescription" v-model="newDescription" class="form-control"
                 placeholder="Add a description" @click="editDescription"></textarea>
-              <div v-else-if="!selectedCard.description" class="edit-desc px-1" @click="editDescription">
+              <div v-else-if="!selectedCard.description" class="edit-desc px-1 mb-4" @click="editDescription">
                 Add a description...
               </div>
               <div v-else>
@@ -293,8 +304,25 @@
             <h3><i class="fas fa-comments"></i> Comments</h3>
             <div class="comments">
               <div v-for="(comment, index) in selectedCard.comments" :key="index" class="comment mb-3">
-                <div class="comment-header">{{ comment.author }} - {{ formatDateTime(comment.createdAt) }}</div>
-                <div class="comment-body">{{ comment.text }}</div>
+                <div class="comment-header d-flex">
+                  <span>{{ comment.author }} - {{ formatDateTime(comment.createdAt) }}</span>
+                  <div class="dropdown" v-if="comment.author === this.isCurrentUser">
+                    <button class="btn btn-secondary btn-icon" type="button" id="commentOptionsDropdown"
+                      data-bs-toggle="dropdown" aria-expanded="false">
+                      <span class="fas fa-ellipsis-v me-2"></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentOptionsDropdown">
+                      <li><a class="dropdown-item" @click="editComment(comment)">Edit</a></li>
+                      <li><a class="dropdown-item" @click="deleteComment(comment)">Delete</a></li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="comment-body" v-if="!comment.editing">{{ comment.text }}</div>
+                <div class="comment-body" v-else>
+                  <textarea v-model="comment.editText" class="form-control mb-2"></textarea>
+                  <button class="btn btn-primary" @click="saveComment(comment)">Save</button>
+                  <button class="btn btn-link" @click="cancelEdit(comment)">Cancel</button>
+                </div>
               </div>
             </div>
             <div class="add-comment mb-3">
@@ -305,24 +333,81 @@
           <!-- Checklists -->
           <div class="card-details-section mb-4">
             <div class="card-details-section mb-4" v-for="(checklist, index) in selectedCard.checklists" :key="index">
-              <h3><i class="fas fa-list"></i>{{ checklist.name }}</h3>
+              <div class="checklist-details d-flex justify-content-between mb-2">
+                <h3 style="margin-bottom: 0;">
+                  <i class="fas fa-list"></i>{{ checklist.name }}
+                </h3>
+                <button @click="showConfirmationDialog = true; selectedChecklistIndex = index"
+                  class="btn btn-secondary">Delete</button>
+                <!-- Confirmation Dialog -->
+                <div class="modal" :class="{ 'd-block': showConfirmationDialog }">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Confirm Deletion</h5>
+                        <button type="button" class="btn-close" @click="showConfirmationDialog = false"></button>
+                      </div>
+                      <div class="modal-body">
+                        Are you sure you want to delete this checklist?
+                      </div>
+                      <div class="modal-footer">
+                        <button @click="deleteChecklist(selectedChecklistIndex)" class="btn btn-danger">Delete</button>
+                        <button @click="resetConfirmationDialog" class="btn btn-secondary">Cancel</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="checklist-progress-bar mb-2">
+                <div class="progress">
+                  <div class="progress-bar" :style="{ width: getChecklistProgress(checklist) + '%' }"></div>
+                </div>
+                <div class="progress-text">{{ Math.floor(getChecklistProgress(checklist)) }}%</div>
+              </div>
               <ul class="checklist list-group list-unstyled">
-                <li v-for="(item, itemIndex) in checklist.items" :key="itemIndex" class="checklist-item list-group-item">
-                  <label :for="'item-' + index + '-' + itemIndex">
-                    <input type="checkbox" :id="'item-' + index + '-' + itemIndex" v-model="item.checked">
-                    <span :class="{ completed: item.checked }">{{ item.text }}</span>
-                  </label>
-                </li>
-                <li v-if="!addingItem[index]">
-                  <button @click="addingItem[index] = true" class="btn btn-primary mt-2">Add an item</button>
-                </li>
-                <li v-else>
-                  <input v-model="newItemText[index]" placeholder="Add a new item" class="form-control"
-                    @keydown.enter="addChecklistItem(index)">
-                  <button @click="addChecklistItem(index)" class="btn btn-primary mt-2">Create item</button>
-                  <button @click="addingItem[index] = false" class="btn btn-link">Cancel</button>
-                </li>
-              </ul>
+  <li v-for="(item, itemIndex) in checklist.items" :key="itemIndex"
+    class="checklist-item list-group-item d-flex" @mouseover="item.showIcons = true"
+    @mouseleave="item.showIcons = false">
+    <label style="padding: 6px;" :for="'item-' + index + '-' + itemIndex">
+      <input type="checkbox" :id="'item-' + index + '-' + itemIndex" v-model="item.isComplete"
+        @change="toggleChecklistItem(checklist.id, item.id, item.isComplete)">
+    </label>
+    <div class="d-flex w-100 justify-content-between">
+      <span style="padding: 6px;" :class="{ completed: item.isComplete }">{{ item.description }}</span>
+      <span class="icons" v-show="item.showIcons">
+        <i class="fas fa-user-plus" @click="fetchCardChecklistItemsMembers(item.id)"></i>
+        <!-- Okno modalne z listą użytkowników przypisanych do elementu checklisty -->
+        <div class="modal" v-if="item.showUserModal" :class="{ 'modal-members-list items': item.showUserModal }"
+          @mouseleave="item.showUserModal = false">
+          <div class="modal-body rounded">
+            <div class="modal-header">
+              <h6 class="modal-title">Assigned Users</h6>
+              <button type="button" class="btn-close btn-close-sm" @click="item.showUserModal = false"
+                aria-label="Close"></button>
+            </div>
+            <ul class="assigned-users list-unstyled item">
+              <li v-for="user in boardMembers" :key="user.id">
+                <div class="user-info">
+                  <img :src="user.avatar || 'https://via.placeholder.com/30x30'" alt="Avatar"
+                    :title="user.login" class="rounded-circle me-2 mwh30">
+                  <span>{{ user.login }}</span>
+                </div>
+                <div>
+                  <i v-if="isUserAssigned(item, user)" class="fas fa-check-circle check-icon"
+                    @click="removeUserFromItem(item, user)"></i>
+                  <i v-else class="fas fa-check-circle uncheck-icon"
+                    @click="assignUserToItem(item, user)"></i>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <!-- -->
+        <i class="fas fa-ellipsis-h" @click="showOptionsDropdown(index)"></i>
+      </span>
+    </div>
+  </li>
+</ul>
             </div>
             <div v-if="!addingChecklist">
               <button @click="addingChecklist = true" class="btn btn-primary mt-2">Add a checklist</button>
@@ -333,20 +418,28 @@
               <button @click="addChecklist" class="btn btn-primary">Create checklist</button>
               <button @click="addingChecklist = false" class="btn btn-link">Cancel</button>
             </div>
-          </div>
 
-          <!-- Attachments -->
-          <div class="card-details-section mb-4">
-            <h3><i class="fas fa-paperclip"></i> Attachments</h3>
-            <div class="attachments">
-              <div v-for="(attachment, index) in selectedCard.attachments" :key="index" class="attachment mb-3">
-                <div class="attachment-body">
-                  <a :href="attachment.url" target="_blank">{{ attachment.name }}</a>
-                  <i class="fas fa-times remove-icon" @click="removeAttachment(index)"></i>
+            <!-- Attachments -->
+            <div class="card-details-section mb-4">
+              <h3><i class="fas fa-paperclip"></i> Attachments</h3>
+              <div class="attachments">
+                <div v-for="(attachment, index) in selectedCard.attachments" :key="index" class="attachment mb-3">
+                  <div class="attachment-body">
+                    <a :href="attachment.path" target="_blank">{{ attachment.name }}</a>
+                    <div class="attachment-actions">
+                      <i class="fas fa-pencil-alt edit-icon" @click="editAttachment(attachment)"></i>
+                      <i class="fas fa-times remove-icon" @click="removeAttachment(attachment.id)"></i>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="add-attachment mb-3">
-                <input type="file" ref="attachmentInput" @change="uploadAttachment" class="form-control-file mb-2">
+                <div class="add-attachment mb-3">
+                  <div class="attachment-info">
+                    <input v-model="attachmentName" type="text" placeholder="Attachment name" class="form-control mb-2">
+                    <input v-model="attachmentPath" type="text" placeholder="Attachment path" class="form-control mb-2">
+                  </div>
+                  <button v-if="!isEditing" @click="uploadAttachment" class="btn btn-primary">Add Attachment</button>
+                  <button v-if="isEditing" @click="uploadAttachment" class="btn btn-primary">Edit Attachment</button>
+                </div>
               </div>
             </div>
           </div>
@@ -372,28 +465,42 @@ export default {
       editingCardTitle: false,
       editedCardTitle: '',
       boardName: '',
+      dueDate: null,
       // new
       newListTitle: '',
       newCardTitle: '',
+      newDueDate: null,
       newDescription: '',
       newComment: '',
       newChecklistTitle: '',
       newItemText: [],
       // is
       isEditingDescription: false,
+      isEditing: false,
       isCurrentUser: null,
+      editedAttachmentId: null,
       // selected
       selectedList: null,
       selectedCard: false,
+      selectedChecklist: null,
+      selectedChecklistItem: null,
+      selectedChecklistIndex: null,
       // show
       showAddListModal: false,
+      showConfirmationDialog: false,
       showAddCardModal: false,
       showCardDetailsModal: false,
       showDeleteListModal: false,
       showDeleteCardModal: false,
       showingAddMemberForm: false,
-      showAddMembersDialog: false,
+      showOptionsDropdownIndex: null,
+      showAddMembersCard: false,
+      showAddMembersCardCheckListItem: false,
+      showAssignedUsersDialog: false, // zmienna do kontrolowania wyświetlania modala
+      showIcons: null,
       editingDueDate: false,
+      attachmentName: '',
+      attachmentPath: '',
       // adding
       addingChecklist: false,
       addingItem: [],
@@ -409,7 +516,9 @@ export default {
       cardComments: [],
       cardChecklists: [],
       cardAttachments: [],
+      assignedUsers: [], // tablica przechowująca przypisanych użytkowników
       modalList: null // Lista, która jest wybrana do usunięcia
+
     }
   },
   mounted() {
@@ -438,7 +547,7 @@ export default {
     async fetchBoardName(boardId) {
       try {
         const token = this.getToken();
-        const response = await axios.get(`https://cabanoss.azurewebsites.net/${boardId}`, {
+        const response = await axios.get(`https://cabanoss.azurewebsites.net/boards/${boardId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.login = localStorage.getItem('login');
@@ -539,7 +648,7 @@ export default {
 
         if (card) {
           card.checklists = response.data;
-          console.log('Zadania pobrane z serwera:', card.checklists);
+          console.log('Checklisty pobrane z serwera:', card.checklists);
         } else {
           console.error('Failed to fetch card details: Invalid cardId');
         }
@@ -547,41 +656,70 @@ export default {
         console.error('Failed to fetch card details:', error);
       }
     },
-    async fetchCardChecklistItems(taskId) {
+    async fetchCardChecklistItems(checklistId) {
       try {
         const token = this.getToken();
-        const response = await axios.get(`https://cabanoss.azurewebsites.net/elements/tasks?taskId=${taskId}`, {
+        const response = await axios.get(`https://cabanoss.azurewebsites.net/elements/tasks?taskId=${checklistId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        // Znajdź kartę na podstawie taskId
-        const card = this.lists.flatMap(list => list.cards).find(card => card.id === taskId);
+        // Znajdź checklistę na podstawie checklistId
+        const checklist = this.selectedCard.checklists.find(checklist => checklist.id === checklistId);
 
-        if (card) {
+        if (checklist) {
           // Aktualizuj elementy checklist
-          card.checklists.forEach(checklist => {
-            const checklistItems = response.data.filter(item => item.checklistId === checklist.id);
-            checklist.items = checklistItems.map(item => ({
-              id: item.id,
-              description: item.description,
-              isComplete: item.isComplete
-            }));
-          });
-          console.log('Elementy checklist pobrane z serwera:', card.checklists);
+          checklist.items = response.data.map(item => ({
+            id: item.id,
+            description: item.description,
+            isComplete: item.isComplete
+          }));
+
+          console.log('Elementy checklist pobrane z serwera:', checklist.items);
         } else {
-          console.error('Failed to fetch card checklist items: Invalid taskId');
+          console.error('Failed to fetch card checklist items: Invalid checklistId');
         }
       } catch (error) {
         console.error('Failed to fetch card checklist items:', error);
       }
     },
+    async fetchCardChecklistItemsMembers(elementId) {
+      try {
+        const token = this.getToken();
+        const response = await axios.get(`https://cabanoss.azurewebsites.net/members/elements?elementId=${elementId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const checklistItem = this.selectedCard.checklists
+          .flatMap(checklist => checklist.items)
+          .find(item => item.id === elementId);
+
+        if (checklistItem) {
+          checklistItem.assignedUsers = response.data;
+          checklistItem.showUserModal = true;
+          console.log('Przypisani użytkownicy elementu checklisty pobrani z serwera:', checklistItem.assignedUsers);
+        } else {
+          console.error('Failed to fetch checklist item members: Invalid elementId');
+        }
+      } catch (error) {
+        console.error('Failed to fetch checklist item members:', error);
+      }
+    },
     async fetchCardAttachments(cardId) {
       try {
         const token = this.getToken();
-        const response = await axios.get(`https://cabanoss.azurewebsites.net/attachments/cards/${cardId}`, {
+        const response = await axios.get(`https://cabanoss.azurewebsites.net/attachments/cards?cardId=${cardId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        this.cardAttachments = response.data;
+
+        // Znajdź kartę na podstawie cardId
+        const card = this.lists.flatMap(list => list.cards).find(card => card.id === cardId);
+
+        if (card) {
+          card.attachments = response.data;
+          console.log('Załączniki pobrane z serwera: ', card.attachments);
+        } else {
+          console.error('Failed to fetch card attachments: Invalid cardId');
+        }
       } catch (error) {
         console.error('Failed to fetch card attachments:', error);
       }
@@ -929,32 +1067,40 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
         await this.fetchCardMembers(cardId);// Aktualizuj listę członków karty
-        
+
       } catch (error) {
         console.error('Failed to assign member to card:', error);
       }
     },
-    addDueDate() {
-      // get the selected card's due date input value
-      const dueDate = this.$refs.dueDateInput.value;
-      // set the selected card's dueDate property to the input value
-      this.selectedCard.dueDate = dueDate;
-      // reset the input value
-      this.$refs.dueDateInput.value = '';
-    },
+    // Metoda do zapisywania terminu zakończenia
+    async saveDueDate() {
+      if (!this.newDueDate) {
+        this.toast.info('Please select a due date');
+        return;
+      }
+      try {
+        const token = this.getToken();
+        const formattedDate = new Date(this.newDueDate).toISOString().split('T')[0];
+        const response = await axios.patch(
+          `https://cabanoss.azurewebsites.net/cards?cardId=${this.selectedCard.id}`, JSON.stringify(formattedDate),
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        // Po zapisaniu nowej daty, zaktualizuj wartość w obiekcie selectedCard
+        this.selectedCard.deadline = formattedDate;
 
-    saveDueDate() {
-      this.selectedCard.dueDate = this.newDueDate.replace('T', ' ');
-      this.editingDueDate = false;
-      this.newDueDate = null;
-    },
+        // Zakończ edycję
+        this.editingDueDate = false;
+        console.log('dodano due date', response);
 
-    // function to remove a due date from the selected card
-    removeDueDate() {
-      // set the selected card's dueDate property to an empty string
-      this.selectedCard.dueDate = '';
+      } catch (error) {
+        console.error('Failed to save due date:', error);
+      }
     },
-
     //Metoda edytująca opis karty
     editDescription() {
       this.isEditingDescription = true;
@@ -1005,15 +1151,15 @@ export default {
       const cardId = this.selectedCard.id;
 
       this.fetchCardMembers(cardId).then(() => {
-        console.log('Użytkownicy wybranej karty', card.members);
+        console.log('showCardDetails: Użytkownicy wybranej karty', card.members);
       });
 
       this.fetchCardComments(cardId).then(() => {
-        console.log('Komentarze wybranej karty', card.comments);
+        console.log('showCardDetails: Komentarze wybranej karty', card.comments);
       });
 
       this.fetchCardChecklists(cardId).then(() => {
-        console.log('Zadania wybranej karty', card.checklists);
+        console.log('showCardDetails: Checklisty wybranej karty', card.checklists);
 
         // Utwórz tablicę z żądaniami fetchCardChecklistItems
         const checklistItemRequests = card.checklists.map(checklist => this.fetchCardChecklistItems(checklist.id));
@@ -1022,23 +1168,31 @@ export default {
         Promise.all(checklistItemRequests)
           .then(() => {
             // Wykorzystaj zaktualizowane dane checklist
-            console.log('Wszystkie elementy checklist:', card.checklists.flatMap(checklist => checklist.items));
+            console.log('showCardDetails: Wszystkie elementy checklist:', card.checklists.flatMap(checklist => checklist.items));
           })
           .catch(error => {
             console.error('Failed to fetch card checklist items:', error);
           });
       });
+
+      this.fetchCardAttachments(cardId).then(() => {
+        console.log('showCardDetails: Załączniki wybranej karty', card.attachments);
+      });
     },
     // Metoda ukrywająca modal ze szczegółami karty
     hideCardDetails() {
-      this.selectedCard = null;
-      this.newComment = '';
-      this.newTaskTitle = '';
-      this.newTaskDescription = '';
-      this.newDescription = '';
-      this.newChecklistTitle = '',
-        this.showAddMembersDialog = false,
+      this.selectedCard = null,
+        this.editingDueDate = false,
+        this.addingChecklist = false,
+        this.newTaskTitle = '',
+        this.newTaskDescription = '',
+        this.newDescription = '',
+        this.newChecklistTitle = '',
+        this.newComment = '',
+        this.showAddMembersCard = false,
+        this.showAddMembersCardCheckListItem = false,
         this.isEditingDescription = false,
+        this.editingCardTitle = false,
         this.newItemText = [],
         this.attachment = []
     },
@@ -1072,8 +1226,69 @@ export default {
         this.toast.error(errorPopup);
       }
     },
+    async saveComment(comment) {
+      try {
+        const token = this.getToken();
+        const commentId = comment.id;
+        const response = await axios.put(
+          `https://cabanoss.azurewebsites.net/comments?commentId=${commentId}`,
+          { text: comment.editText },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Aktualizuj tekst komentarza
+        comment.text = comment.editText;
+        comment.editing = false;
+
+        // Wyświetl powiadomienie o sukcesie
+        this.toast.success('Comment updated successfully');
+      } catch (error) {
+        const errorPopup = Object.values(error.response.data.errors)
+          .map((messages) => messages.join('. '))
+          .join('. ');
+        console.error(error);
+        this.errorPopup = errorPopup;
+        this.toast.error(errorPopup);
+      }
+    },
+    async deleteComment(comment) {
+      try {
+        const token = this.getToken();
+        const commentId = comment.id;
+        const response = await axios.delete(`https://cabanoss.azurewebsites.net/comments?commentId=${commentId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // Usuń komentarz z tablicy selectedCard.comments
+        const commentIndex = this.selectedCard.comments.findIndex((c) => c.id === commentId);
+        if (commentIndex !== -1) {
+          this.selectedCard.comments.splice(commentIndex, 1);
+        }
+
+        // Wyświetl powiadomienie o sukcesie
+        this.toast.success('Comment deleted successfully');
+      } catch (error) {
+        const errorPopup = Object.values(error.response.data.errors)
+          .map((messages) => messages.join('. '))
+          .join('. ');
+        console.error(error);
+        this.errorPopup = errorPopup;
+        this.toast.error(errorPopup);
+      }
+    },
+    editComment(comment) {
+      comment.editing = true;
+      comment.editText = comment.text;
+    },
+    cancelEdit(comment) {
+      comment.editing = false;
+    },
     formatDateTime(dateTime) {
       const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+      return new Date(dateTime).toLocaleString(undefined, options);
+    },
+    formatDueDate(dateTime) {
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
       return new Date(dateTime).toLocaleString(undefined, options);
     },
     // Metoda dodająca checklistę do karty
@@ -1092,13 +1307,25 @@ export default {
 
           const response = await axios.post(url, data, { headers });
 
-          // Dodaj nowe zadanie (checklistę) do wybranej karty na podstawie odpowiedzi z serwera
-          const newChecklist = response.data;
-
           this.newChecklistTitle = '';
           this.addingChecklist = false;
-          this.fetchCardChecklists(this.selectedCard.id);
-          console.log('Dodano nowe zadanie (checklistę):', newChecklist);
+          this.fetchCardChecklists(this.selectedCard.id).then(() => {
+            console.log('Ponownie pobrane checklisty wybranej karty', this.selectedCard.checklists);
+
+            // Utwórz tablicę z żądaniami fetchCardChecklistItems
+            const checklistItemRequests = this.selectedCard.checklists.map(checklist => this.fetchCardChecklistItems(checklist.id));
+
+            // Wykonaj wszystkie żądania asynchroniczne i oczekuj na ich zakończenie
+            Promise.all(checklistItemRequests)
+              .then(() => {
+                // Wykorzystaj zaktualizowane dane checklist
+                console.log('Ponownie pobrane elementy checklist:', this.selectedCard.checklists.flatMap(checklist => checklist.items));
+              })
+              .catch(error => {
+                console.error('Błąd podczas pobierania elementów checklist:', error);
+              });
+          });
+
         } catch (error) {
           const errorPopup = Object.values(error.response.data.errors)
             .map(messages => messages.join('. '))
@@ -1110,46 +1337,235 @@ export default {
         }
       }
     },
+    async deleteChecklist(index) {
+      try {
+        const checklist = this.selectedCard.checklists[index];
+        const taskId = checklist.id; // Załóż, że identyfikator checklisty jest przechowywany w polu "id"
+        const token = this.getToken();
+        // Wykonaj żądanie DELETE do API
+        await axios.delete(`https://cabanoss.azurewebsites.net/tasks?taskId=${taskId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        // Po udanym usunięciu checklisty, usuń ją również z tablicy w komponencie
+        this.selectedCard.checklists.splice(index, 1);
+        this.toast.success('Checklist deleted successfuly');
+        // Zresetuj stan dialogu potwierdzającego
+        this.resetConfirmationDialog();
+      } catch (error) {
+        console.error('Błąd podczas usuwania checklisty:', error);
+      }
+    },
+
+    resetConfirmationDialog() {
+      this.showConfirmationDialog = false;
+      this.selectedChecklistIndex = null;
+    },
     // Metoda dodająca element do checklisty
     async addChecklistItem(checklistIndex) {
       const checklist = this.selectedCard.checklists[checklistIndex];
+      const checklistId = checklist.id;
       const newItemText = this.newItemText[checklistIndex];
-
+      console.log('po kliknieciu addChecklistItem zmienna checklist', checklist);
+      console.log('po kliknieciu addChecklistItem zmienna newItemText', newItemText);
       try {
         const token = this.getToken();
-        const response = await axios.post(`https://cabanoss.azurewebsites.net/elements/tasks?taskId=${this.checklist.id}`, {
-          checklistId: checklist.id,
-          text: newItemText
+        const response = await axios.post(`https://cabanoss.azurewebsites.net/elements/tasks?taskId=${checklistId}`, {
+          description: newItemText,
+          isComplete: false
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
-        const newItem = response.data;
-        checklist.items.push(newItem);
         this.newItemText[checklistIndex] = '';
-        this.addingItem[checklistIndex] = false;
-        console.log('Nowy element checklists dodany:', newItem);
+        this.fetchCardChecklistItems(this.selectedCard.checklists[checklistIndex].id);
+        console.log('Nowy element checklists dodany:', this.newItemText);
       } catch (error) {
+        const errorPopup = Object.values(error.response.data.errors)
+          .map(messages => messages.join('. '))
+          .join('. ');
+        console.error(error);
+        this.errorPopup = errorPopup;
+        this.toast.error(errorPopup);
         console.error('Failed to add checklist item:', error);
       }
     },
-    uploadAttachment() {
-      const file = this.$refs.attachmentInput.files[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const attachment = {
-          name: file.name,
-          url: event.target.result
-        };
-        this.selectedCard.attachments.push(attachment);
-      };
-      reader.readAsDataURL(file);
+    getChecklistProgress(checklist) {
+      if (checklist.items && checklist.items.length > 0) {
+        const totalItems = checklist.items.length;
+        const completedItems = checklist.items.filter(item => item.isComplete).length;
+        return (completedItems / totalItems) * 100;
+      } else {
+        return 0; // Jeśli brak elementów, zwracamy 0% postępu
+      }
+    },
+    toggleChecklistItem(checklistId, itemId, isComplete) {
+      const checklist = this.selectedCard.checklists.find(checklist => checklist.id === checklistId);
+      if (checklist) {
+        const item = checklist.items.find(item => item.id === itemId);
+        if (item) {
+          item.isComplete = isComplete;
+          this.updateChecklistItemStatus(checklistId, itemId, isComplete, item.description);
+        }
+      }
+    },
+    async updateChecklistItemStatus(checklistId, itemId, isComplete, description) {
+      try {
+        const token = this.getToken();
+        const response = await axios.put(`https://cabanoss.azurewebsites.net/elements?elementId=${itemId}`, {
+          isComplete,
+          description
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log('Checklist item status updated:', response);
+      } catch (error) {
+        console.error('Failed to update checklist item status:', error);
+      }
+    },
+    showAssignedUsersModal(item) {
+      const boardId = this.$route.params.boardId;
+      const response = this.fetchBoardMembers(boardId);
+      this.boardMembers = response.data;
+
+      //this.showAssignedUsersDialog = true;
+      //this.fetchCardChecklistItemsMembers(item.id);
+    },
+    showOptionsDropdown(index) {
+      if (this.showOptionsDropdownIndex === index) {
+        this.showOptionsDropdownIndex = null;
+      } else {
+        this.showOptionsDropdownIndex = index;
+      }
     },
 
-    removeAttachment(index) {
-      this.selectedCard.attachments.splice(index, 1);
-    }
-  },
+    isUserAssigned(item, user) {
+      return item.assignedUsers.some(assignedUser => assignedUser.id === user.id);
+    },
+    assignUserToItem(item, user) {
+      const elementId = item.id;
+      const userId = user.id;
+      const token = this.getToken();
 
+      axios.post(`https://cabanoss.azurewebsites.net/members/elements/${elementId}?userId=${userId}`, null, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(response => {
+          console.log('User assigned to item:', response.data);
+          // Aktualizuj listę przypisanych użytkowników
+          item.assignedUsers.push(user);
+        })
+        .catch(error => {
+          console.error('Failed to assign user to item:', error);
+        });
+    },
+
+    removeUserFromItem(item, user) {
+      const elementId = item.id;
+      const userId = user.id;
+      const token = this.getToken();
+
+      axios.delete(`https://cabanoss.azurewebsites.net/members/elements/${elementId}?userId=${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(response => {
+          console.log('User removed from item:', response.data);
+          // Usuń użytkownika z listy przypisanych użytkowników
+          item.assignedUsers = item.assignedUsers.filter(assignedUser => assignedUser.id !== user.id);
+        })
+        .catch(error => {
+          console.error('Failed to remove user from item:', error);
+        });
+    },
+
+    async uploadAttachment() {
+      if (!this.isLinkValid(this.attachmentPath)) {
+        // Walidacja nie powiodła się - nieprawidłowy link
+        console.error('Invalid attachment link');
+        return;
+      }
+
+      const cardId = this.selectedCard.id;
+
+      try {
+        const token = this.getToken();
+
+        if (this.isEditing && this.editedAttachmentId) {
+          // Edytowanie załącznika
+          const updatedAttachment = {
+            name: this.attachmentName,
+            path: this.attachmentPath,
+          };
+
+          await axios.put(
+            `https://cabanoss.azurewebsites.net/attachments?attachmentId=${this.editedAttachmentId}`,
+            updatedAttachment,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          // Zaktualizuj załącznik w liście
+          const attachmentIndex = this.selectedCard.attachments.findIndex(
+            (attachment) => attachment.id === this.editedAttachmentId
+          );
+          this.selectedCard.attachments.splice(attachmentIndex, 1, {
+            id: this.editedAttachmentId,
+            ...updatedAttachment,
+          });
+
+          // Zresetuj stan edycji
+          this.isEditing = false;
+          this.editedAttachmentId = null;
+        } else {
+          // Dodawanie nowego załącznika
+          const newAttachment = {
+            name: this.attachmentName,
+            path: this.attachmentPath,
+          };
+
+          const response = await axios.post(
+            `https://cabanoss.azurewebsites.net/attachments/cards?cardId=${cardId}`,
+            newAttachment,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          // Dodaj nowy załącznik do listy
+          this.fetchCardAttachments(this.selectedCard.id);
+        }
+
+        // Zresetuj pola formularza
+        this.attachmentName = '';
+        this.attachmentPath = '';
+      } catch (error) {
+        console.error('Failed to upload attachment:', error);
+      }
+    },
+    editAttachment(attachment) {
+      this.isEditing = true;
+      this.editedAttachmentId = attachment.id;
+
+      // Ustaw nazwę i ścieżkę załącznika w polach formularza
+      this.attachmentName = attachment.name;
+      this.attachmentPath = attachment.path;
+    },
+    async removeAttachment(attachmentId) {
+
+      try {
+        const token = this.getToken();
+        await axios.delete(
+          `https://cabanoss.azurewebsites.net/attachments?attachmentId=${attachmentId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Usuń załącznik z listy
+        this.selectedCard.attachments = this.selectedCard.attachments.filter(
+          (attachment) => attachment.id !== attachmentId
+        );
+      } catch (error) {
+        console.error('Failed to remove attachment:', error);
+      }
+    },
+    isLinkValid(link) {
+      // Prosta walidacja linku - sprawdzamy, czy rozpoczyna się od http lub https
+      return /^https?:\/\//i.test(link);
+    }
+  }
 }
 </script>

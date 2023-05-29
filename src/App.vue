@@ -13,49 +13,18 @@
 
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-md-0">
-          <li class="nav-item dropdown">
+          <li v-if="!isLoggedIn" class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
               aria-expanded="false">
-              List 1
+              Account
             </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-              <li v-if="!isLoggedIn"><router-link class="dropdown-item" to="/login">Login</router-link></li>
-              <li v-if="!isLoggedIn"><router-link class="dropdown-item" to="/signup">Sign up!</router-link></li>
-              <li><a class="dropdown-item" href="#">Link 1.3</a></li>
+            <ul   class="dropdown-menu" aria-labelledby="navbarDropdown1">
+              <li><router-link class="dropdown-item" to="/login">Login</router-link></li>
+              <li><router-link class="dropdown-item" to="/signup">Sign up!</router-link></li>
             </ul>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-bs-toggle="dropdown"
-              aria-expanded="false">
-              List 2
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown2">
-              <li><a class="dropdown-item" href="#">Link 2.1</a></li>
-              <li><a class="dropdown-item" href="#">Link 2.2</a></li>
-              <li><a class="dropdown-item" href="#">Link 2.3</a></li>
-            </ul>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown3" role="button" data-bs-toggle="dropdown"
-              aria-expanded="false">
-              List 3
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown3">
-              <li><a class="dropdown-item" href="#">Link 3.1</a></li>
-              <li><a class="dropdown-item" href="#">Link 3.2</a></li>
-              <li><a class="dropdown-item" href="#">Link 3.3</a></li>
-            </ul>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown4" role="button" data-bs-toggle="dropdown"
-              aria-expanded="false">
-              List 4
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown4">
-              <li><a class="dropdown-item" href="#">Link 4.1</a></li>
-              <li><a class="dropdown-item" href="#">Link 4.2</a></li>
-              <li><a class="dropdown-item" href="#">Link 4.3</a></li>
-            </ul>
+            <li v-if="isLoggedIn"><router-link class="dropdown-item" to="/">My boards</router-link></li>
           </li>
         </ul>
 
