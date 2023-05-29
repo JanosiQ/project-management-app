@@ -1039,14 +1039,9 @@ export default {
       this.selectedListIndex = listIndex;
       this.showAddCardModal = true;
     },
-
-    addMemberToCard(memberId) {
-      this.selectedCard.members.push(memberId);
-    },
     isMemberAssigned(memberId) {
       return this.selectedCard.members && this.selectedCard.members.some(member => member.id === memberId);
     },
-
     async toggleMemberSelection(cardId, memberId) {
       try {
         const token = this.getToken();
@@ -1063,7 +1058,6 @@ export default {
         console.error('Failed to toggle member selection:', error);
       }
     },
-
     async removeMemberFromCard(cardId, userId) {
       const token = this.getToken();
       try {
@@ -1075,7 +1069,6 @@ export default {
         console.error('Failed to remove member from card:', error);
       }
     },
-
     async assignMemberToCard(cardId, userId) {
       const token = this.getToken();
       try {
@@ -1439,7 +1432,6 @@ export default {
           });
       }
     },
-
     deleteListItem(checklist, item) {
       // Wywołanie API DELETE do usunięcia elementu
       const apiUrl = `https://cabanoss.azurewebsites.net/elements?elementId=${item.id}`;
@@ -1472,7 +1464,6 @@ export default {
     cancelChecklistEditing(checklist) {
       checklist.editing = false;
     },
-
     getChecklistProgress(checklist) {
       if (checklist.items && checklist.items.length > 0) {
         const totalItems = checklist.items.length;
@@ -1527,7 +1518,6 @@ export default {
           this.toast.error(error.response.data);
         });
     },
-
     removeUserFromItem(item, user) {
       const elementId = item.id;
       const userId = user.id;
