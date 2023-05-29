@@ -179,7 +179,7 @@ export default {
       const currentName = board.name; // Aktualna nazwa tablicy
       const newName = prompt("Wpisz nową nazwę:", currentName); // Zapytanie użytkownika o nową nazwę
       if (newName !== null && newName.trim() !== "" && newName !== currentName) {
-        board.name = newName.trim(); // Aktualizacja nazwy tablicy
+
         const token = localStorage.getItem('token'); // Pobranie tokena autoryzacyjnego z local storage
         const headers = {
           Authorization: `Bearer ${token}`, // Ustawienie nagłówka z tokenem
@@ -190,16 +190,12 @@ export default {
         axios
           .put(`https://cabanoss.azurewebsites.net/boards?boardId=${board.id}`, data, { headers }) // Wywołanie żądania PUT, aby zaktualizować nazwę tablicy
           .then(() => {
+            board.name = newName.trim(); // Aktualizacja nazwy tablicy
             this.toast.success('Board name updated successfully');
           })
           .catch(error => {
-            this.fetchUserBoards(); // Wywołanie metody do ponownego pobrania tablic użytkownika
-            const errorPopup = Object.values(error.response.data.errors)
-              .map(messages => messages.join('. '))
-              .join('. ');
             console.error(error);
-            this.errorPopup = errorPopup;
-            this.toast.error(errorPopup);
+            this.toast.error(error.response.data);
           });
       }
     },
@@ -217,7 +213,7 @@ export default {
         })
         .catch(error => {
           console.error(error);
-          this.errorMessage = 'Error deleting board';
+          this.toast.error(error.response.data);
         });
     },
   },

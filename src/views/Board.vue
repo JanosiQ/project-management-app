@@ -334,10 +334,17 @@
           <div class="card-details-section mb-4">
             <div class="card-details-section mb-4" v-for="(checklist, index) in selectedCard.checklists" :key="index">
               <div class="checklist-details d-flex justify-content-between mb-2">
-                <h3 style="margin-bottom: 0;">
+                <h3 style="margin-bottom: 0;" v-if="!checklist.editing" @click="startEditing(checklist)">
                   <i class="fas fa-list"></i>{{ checklist.name }}
                 </h3>
-                <button @click="showConfirmationDialog = true; selectedChecklistIndex = index"
+                <div v-if="checklist.editing" class="mb-2">
+                  <textarea class="form-control" v-if="checklist.editing" v-model="checklist.updatedName"></textarea>
+                  <button class="btn btn-primary"
+                    @click="saveChecklistName(checklist.id, checklist.updatedName)">Save</button>
+                  <i class="fas fa-times" style="position: relative;top: 3px;"
+                    @click="cancelChecklistEditing(checklist)"></i>
+                </div>
+                <button v-if="!checklist.editing" @click="showConfirmationDialog = true; selectedChecklistIndex = index"
                   class="btn btn-secondary">Delete</button>
                 <!-- Confirmation Dialog -->
                 <div class="modal" :class="{ 'd-block': showConfirmationDialog }">
@@ -365,49 +372,72 @@
                 <div class="progress-text">{{ Math.floor(getChecklistProgress(checklist)) }}%</div>
               </div>
               <ul class="checklist list-group list-unstyled">
-  <li v-for="(item, itemIndex) in checklist.items" :key="itemIndex"
-    class="checklist-item list-group-item d-flex" @mouseover="item.showIcons = true"
-    @mouseleave="item.showIcons = false">
-    <label style="padding: 6px;" :for="'item-' + index + '-' + itemIndex">
-      <input type="checkbox" :id="'item-' + index + '-' + itemIndex" v-model="item.isComplete"
-        @change="toggleChecklistItem(checklist.id, item.id, item.isComplete)">
-    </label>
-    <div class="d-flex w-100 justify-content-between">
-      <span style="padding: 6px;" :class="{ completed: item.isComplete }">{{ item.description }}</span>
-      <span class="icons" v-show="item.showIcons">
-        <i class="fas fa-user-plus" @click="fetchCardChecklistItemsMembers(item.id)"></i>
-        <!-- Okno modalne z listą użytkowników przypisanych do elementu checklisty -->
-        <div class="modal" v-if="item.showUserModal" :class="{ 'modal-members-list items': item.showUserModal }"
-          @mouseleave="item.showUserModal = false">
-          <div class="modal-body rounded">
-            <div class="modal-header">
-              <h6 class="modal-title">Assigned Users</h6>
-              <button type="button" class="btn-close btn-close-sm" @click="item.showUserModal = false"
-                aria-label="Close"></button>
-            </div>
-            <ul class="assigned-users list-unstyled item">
-              <li v-for="user in boardMembers" :key="user.id">
-                <div class="user-info">
-                  <img :src="user.avatar || 'https://via.placeholder.com/30x30'" alt="Avatar"
-                    :title="user.login" class="rounded-circle me-2 mwh30">
-                  <span>{{ user.login }}</span>
-                </div>
-                <div>
-                  <i v-if="isUserAssigned(item, user)" class="fas fa-check-circle check-icon"
-                    @click="removeUserFromItem(item, user)"></i>
-                  <i v-else class="fas fa-check-circle uncheck-icon"
-                    @click="assignUserToItem(item, user)"></i>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <!-- -->
-        <i class="fas fa-ellipsis-h" @click="showOptionsDropdown(index)"></i>
-      </span>
-    </div>
-  </li>
-</ul>
+                <li v-for="(item, itemIndex) in checklist.items" :key="itemIndex"
+                  class="checklist-item list-group-item d-flex" @mouseover="item.showIcons = true"
+                  @mouseleave="item.showIcons = false">
+                  <label style="padding: 6px;" :for="'item-' + index + '-' + itemIndex">
+                    <input type="checkbox" :id="'item-' + index + '-' + itemIndex" v-model="item.isComplete"
+                      @change="toggleChecklistItem(checklist.id, item.id, item.isComplete)">
+                  </label>
+                  <div class="d-flex w-100 justify-content-between">
+                    <span style="padding: 6px;" :class="{ completed: item.isComplete }">{{ item.description }}</span>
+                    <span class="icons" v-show="item.showIcons">
+                      <i class="fas fa-user-plus" @click="fetchCardChecklistItemsMembers(item.id)"></i>
+                      <!-- Okno modalne z listą użytkowników przypisanych do elementu checklisty -->
+                      <div class="modal" v-if="item.showUserModal"
+                        :class="{ 'modal-members-list items': item.showUserModal }"
+                        @mouseleave="item.showUserModal = false">
+                        <div class="modal-body rounded">
+                          <div class="modal-header">
+                            <h6 class="modal-title">Assigned Users</h6>
+                            <button type="button" class="btn-close btn-close-sm" @click="item.showUserModal = false"
+                              aria-label="Close"></button>
+                          </div>
+                          <ul class="assigned-users list-unstyled item">
+                            <li v-for="user in boardMembers" :key="user.id">
+                              <div class="user-info">
+                                <img :src="user.avatar || 'https://via.placeholder.com/30x30'" alt="Avatar"
+                                  :title="user.login" class="rounded-circle me-2 mwh30">
+                                <span>{{ user.login }}</span>
+                              </div>
+                              <div>
+                                <i v-if="isUserAssigned(item, user)" class="fas fa-check-circle check-icon"
+                                  @click="removeUserFromItem(item, user)"></i>
+                                <i v-else class="fas fa-check-circle uncheck-icon"
+                                  @click="assignUserToItem(item, user)"></i>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                      <!-- -->
+                      <div class="dropdown" style="display: contents;">
+                        <button class="btn btn-secondary btn-icon" type="button" id="boardOptionsDropdown"
+                          data-bs-toggle="dropdown" aria-expanded="false">
+                          <span class="fas fa-ellipsis-h"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="boardOptionsDropdown">
+                          <li>
+                            <a class="dropdown-item" @click="editListItem(checklist, item)">Edit item</a>
+                          </li>
+                          <li>
+                            <a class="dropdown-item" @click="deleteListItem(checklist, item)">Delete</a>
+                          </li>
+                        </ul>
+                      </div>
+                    </span>
+                  </div>
+                </li>
+                <li v-if="!addingItem[index]">
+                  <button @click="addingItem[index] = true" class="btn btn-primary mt-2">Add an item</button>
+                </li>
+                <li v-else>
+                  <input v-model="newItemText[index]" placeholder="Add a new item" class="form-control"
+                    @keydown.enter="addChecklistItem(index)">
+                  <button @click="addChecklistItem(index)" class="btn btn-primary mt-2">Create item</button>
+                  <button @click="addingItem[index] = false" class="btn btn-link">Cancel</button>
+                </li>
+              </ul>
             </div>
             <div v-if="!addingChecklist">
               <button @click="addingChecklist = true" class="btn btn-primary mt-2">Add a checklist</button>
@@ -418,7 +448,6 @@
               <button @click="addChecklist" class="btn btn-primary">Create checklist</button>
               <button @click="addingChecklist = false" class="btn btn-link">Cancel</button>
             </div>
-
             <!-- Attachments -->
             <div class="card-details-section mb-4">
               <h3><i class="fas fa-paperclip"></i> Attachments</h3>
@@ -493,7 +522,6 @@ export default {
       showDeleteListModal: false,
       showDeleteCardModal: false,
       showingAddMemberForm: false,
-      showOptionsDropdownIndex: null,
       showAddMembersCard: false,
       showAddMembersCardCheckListItem: false,
       showAssignedUsersDialog: false, // zmienna do kontrolowania wyświetlania modala
@@ -538,7 +566,6 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.boardMembers = response.data;
-        console.log('Użytkownicy przypisani do danej tablicy', response);
         this.isCurrentUser = localStorage.getItem('login');
       } catch (error) {
         console.error('Failed to fetch board members:', error);
@@ -553,10 +580,8 @@ export default {
         this.login = localStorage.getItem('login');
         const board = response.data;
         this.boardName = board.name;
-        console.log('Nazwa danej tablicy: ', response);
       } catch (error) {
-        console.error('Failed to fetch board name:', error);
-        // Obsłuż błąd w przypadku niepowodzenia pobrania nazwy tablicy
+        console.error('Failed to fetch board name:', error);// Obsłuż błąd w przypadku niepowodzenia pobrania nazwy tablicy
       }
     },
     async fetchLists(boardId) {
@@ -566,8 +591,6 @@ export default {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.lists = response.data;
-        console.log('Listy w danej tablicy', response);
-
         this.lists.forEach(list => {
           const listId = list.id; // Przypisz listId dla każdej listy
           if (listId) {
@@ -608,7 +631,6 @@ export default {
 
         if (card) {
           card.members = response.data;
-          console.log('Członkowie karty pobrani z serwera:', card.members);
         } else {
           console.error('Failed to fetch card members: Invalid cardId');
         }
@@ -628,7 +650,6 @@ export default {
 
         if (card) {
           card.comments = response.data;
-          console.log('Komentarze pobrane z serwera: ', card.comments)
         } else {
           console.error('Failed to fetch card comments: Invalid cardId');
         }
@@ -648,7 +669,6 @@ export default {
 
         if (card) {
           card.checklists = response.data;
-          console.log('Checklisty pobrane z serwera:', card.checklists);
         } else {
           console.error('Failed to fetch card details: Invalid cardId');
         }
@@ -673,8 +693,6 @@ export default {
             description: item.description,
             isComplete: item.isComplete
           }));
-
-          console.log('Elementy checklist pobrane z serwera:', checklist.items);
         } else {
           console.error('Failed to fetch card checklist items: Invalid checklistId');
         }
@@ -696,7 +714,6 @@ export default {
         if (checklistItem) {
           checklistItem.assignedUsers = response.data;
           checklistItem.showUserModal = true;
-          console.log('Przypisani użytkownicy elementu checklisty pobrani z serwera:', checklistItem.assignedUsers);
         } else {
           console.error('Failed to fetch checklist item members: Invalid elementId');
         }
@@ -716,7 +733,6 @@ export default {
 
         if (card) {
           card.attachments = response.data;
-          console.log('Załączniki pobrane z serwera: ', card.attachments);
         } else {
           console.error('Failed to fetch card attachments: Invalid cardId');
         }
@@ -743,7 +759,9 @@ export default {
           console.log(response);
         })
         .catch(error => {
+          
           console.error('Failed to update card title:', error);
+          this.toast.error(error.response.data);
         });
     },
     showAddMemberForm() {
@@ -785,7 +803,7 @@ export default {
                   this.fetchBoardMembers(this.$route.params.boardId);
                 })
                 .catch(error => {
-                  this.toast.error('Failed to add member');
+                  this.toast.error(error.response.data);
                   console.error('Failed to add member:', error);
                 });
             } else {
@@ -817,8 +835,8 @@ export default {
         // Wykonaj odpowiednie operacje po zaktualizowaniu roli
         this.fetchBoardMembers(this.$route.params.boardId);
       } catch (error) {
-        this.toast.error(error.message);
         console.error('Failed to change user role:', error);
+        this.toast.error(error.response.data);
         // Obsłuż błąd w przypadku niepowodzenia zaktualizowania roli użytkownika
       }
     },
@@ -873,7 +891,7 @@ export default {
             this.toast.error(error.message);
           } else {
             console.error(error);
-            this.toast.error('Error creating account');
+            this.toast.error(error.response.data);
           }
         });
     },
@@ -889,7 +907,7 @@ export default {
       // Jeśli użytkownik kliknął "OK" i wpisał nową nazwę, aktualizujemy nazwę listy
       if (newTitle !== null && newTitle.trim() !== "" && newTitle !== currentTitle) {
         const listId = list.id; // Pobieramy ID listy
-        list.name = newTitle.trim(); // Aktualizujemy nazwę listy 
+
         const token = this.getToken(); // Pobieramy token uwierzytelniający
 
         // Tworzymy obiekt z nowymi danymi listy
@@ -904,6 +922,7 @@ export default {
             headers: { Authorization: `Bearer ${token}` }
           })
           .then(() => {
+            list.name = newTitle.trim(); // Aktualizujemy nazwę listy 
             console.log('List name updated successfully');
           })
           .catch(error => {
@@ -919,7 +938,7 @@ export default {
               this.toast.error(error.message);
             } else {
               console.error(error);
-              this.toast.error('Error creating account');
+              this.toast.error(error.response.data);
             }
           });
       }
@@ -939,6 +958,7 @@ export default {
         })
         .catch(error => {
           console.error('Failed to delete list:', error);
+          this.toast.error(error.response.data);
         });
     },
     // Metoda dodająca nową kartę
@@ -963,13 +983,8 @@ export default {
           console.log('Successfully added card:', response);
         })
         .catch(error => {
-          const errorPopup = Object.values(error.response.data.errors)
-            .map(messages => messages.join('. '))
-            .join('. ');
-          console.error(error);
-          this.errorPopup = errorPopup;
-          this.toast.error(errorPopup);
           console.error('Failed to add card:', error);
+          this.toast.error(error.response.data);
         });
     },
     editCard(card) {
@@ -981,9 +996,7 @@ export default {
 
         if (newName !== null && newName.trim() !== "" && newName !== currentName) {
           const cardId = card.id;
-          card.name = newName.trim();
           const token = this.getToken();
-
           const updatedCard = {
             id: cardId,
             name: newName.trim()
@@ -994,10 +1007,12 @@ export default {
               headers: { Authorization: `Bearer ${token}` }
             })
             .then(response => {
+              card.name = newName.trim();
               console.log('Card name updated successfully', response);
             })
             .catch(error => {
               console.error('Failed to update card:', error);
+              this.toast.error(error.response.data);
             });
         }
       }
@@ -1016,6 +1031,7 @@ export default {
         })
         .catch(error => {
           console.error('Failed to delete card:', error);
+          this.toast.error(error.response.data);
         });
     },
     // Metoda wyboru listy do dodania nowej karty
@@ -1070,6 +1086,7 @@ export default {
 
       } catch (error) {
         console.error('Failed to assign member to card:', error);
+        this.toast.error(error.response.data);
       }
     },
     // Metoda do zapisywania terminu zakończenia
@@ -1099,6 +1116,7 @@ export default {
 
       } catch (error) {
         console.error('Failed to save due date:', error);
+        this.toast.error(error.response.data);
       }
     },
     //Metoda edytująca opis karty
@@ -1142,6 +1160,7 @@ export default {
           })
           .catch(error => {
             console.error('Failed to update card description:', error);
+            this.toast.error(error.response.data);
           });
       }
     },
@@ -1150,34 +1169,24 @@ export default {
       this.selectedCard = card;
       const cardId = this.selectedCard.id;
 
-      this.fetchCardMembers(cardId).then(() => {
-        console.log('showCardDetails: Użytkownicy wybranej karty', card.members);
-      });
+      this.fetchCardMembers(cardId);
 
-      this.fetchCardComments(cardId).then(() => {
-        console.log('showCardDetails: Komentarze wybranej karty', card.comments);
-      });
+      this.fetchCardComments(cardId);
 
       this.fetchCardChecklists(cardId).then(() => {
-        console.log('showCardDetails: Checklisty wybranej karty', card.checklists);
-
         // Utwórz tablicę z żądaniami fetchCardChecklistItems
         const checklistItemRequests = card.checklists.map(checklist => this.fetchCardChecklistItems(checklist.id));
 
         // Wykonaj wszystkie żądania asynchroniczne i oczekuj na ich zakończenie
         Promise.all(checklistItemRequests)
           .then(() => {
-            // Wykorzystaj zaktualizowane dane checklist
-            console.log('showCardDetails: Wszystkie elementy checklist:', card.checklists.flatMap(checklist => checklist.items));
+
           })
           .catch(error => {
             console.error('Failed to fetch card checklist items:', error);
           });
       });
-
-      this.fetchCardAttachments(cardId).then(() => {
-        console.log('showCardDetails: Załączniki wybranej karty', card.attachments);
-      });
+      this.fetchCardAttachments(cardId);
     },
     // Metoda ukrywająca modal ze szczegółami karty
     hideCardDetails() {
@@ -1327,13 +1336,34 @@ export default {
           });
 
         } catch (error) {
-          const errorPopup = Object.values(error.response.data.errors)
-            .map(messages => messages.join('. '))
-            .join('. ');
-          console.error(error);
-          this.errorPopup = errorPopup;
-          this.toast.error(errorPopup);
           console.error('Failed to add checklist:', error);
+          this.toast.error(error.response.data);
+        }
+      }
+    },
+    async saveChecklistName(checklistId, updatedName) {
+      if (updatedName) {
+        try {
+          const token = this.getToken();
+          const apiUrl = `https://cabanoss.azurewebsites.net/tasks?taskId=${checklistId}`;
+          const headers = {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          };
+          const data = {
+            name: updatedName,
+          };
+
+          const response = await axios.put(apiUrl, data, { headers });
+
+          // Znajdź checklistę w tablicy i zaktualizuj nazwę
+          const checklist = this.selectedCard.checklists.find(item => item.id === checklistId);
+
+          checklist.name = updatedName;
+          checklist.editing = false;
+          console.log('Nazwa checklisty została zaktualizowana:', response.data);
+        } catch (error) {
+          console.error('Błąd podczas edytowania checklisty:', error);
         }
       }
     },
@@ -1353,6 +1383,7 @@ export default {
         this.resetConfirmationDialog();
       } catch (error) {
         console.error('Błąd podczas usuwania checklisty:', error);
+        this.toast.error(error.response.data);
       }
     },
 
@@ -1365,8 +1396,7 @@ export default {
       const checklist = this.selectedCard.checklists[checklistIndex];
       const checklistId = checklist.id;
       const newItemText = this.newItemText[checklistIndex];
-      console.log('po kliknieciu addChecklistItem zmienna checklist', checklist);
-      console.log('po kliknieciu addChecklistItem zmienna newItemText', newItemText);
+
       try {
         const token = this.getToken();
         const response = await axios.post(`https://cabanoss.azurewebsites.net/elements/tasks?taskId=${checklistId}`, {
@@ -1379,15 +1409,70 @@ export default {
         this.fetchCardChecklistItems(this.selectedCard.checklists[checklistIndex].id);
         console.log('Nowy element checklists dodany:', this.newItemText);
       } catch (error) {
-        const errorPopup = Object.values(error.response.data.errors)
-          .map(messages => messages.join('. '))
-          .join('. ');
-        console.error(error);
-        this.errorPopup = errorPopup;
-        this.toast.error(errorPopup);
         console.error('Failed to add checklist item:', error);
+        this.toast.error(error.response.data);
       }
     },
+    editListItem(checklist, item) {
+      const currentName = item.description;
+      const newName = prompt("Enter new item name:", currentName);
+
+      if (newName !== null && newName.trim() !== "" && newName !== currentName) {
+        const itemId = item.id;
+        item.description = newName.trim();
+        const token = this.getToken();
+
+        const updatedItem = {
+          id: itemId,
+          description: newName.trim()
+        };
+
+        axios
+          .put(`https://cabanoss.azurewebsites.net/elements?elementId=${itemId}`, updatedItem, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          .then(response => {
+            console.log('Item name updated successfully', response);
+          })
+          .catch(error => {
+            console.error('Failed to update item:', error);
+          });
+      }
+    },
+
+    deleteListItem(checklist, item) {
+      // Wywołanie API DELETE do usunięcia elementu
+      const apiUrl = `https://cabanoss.azurewebsites.net/elements?elementId=${item.id}`;
+
+      const token = this.getToken(); // Pobierz token uwierzytelniający
+
+      axios.delete(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+        .then(response => {
+          // Usuń element z listy
+          const itemIndex = checklist.items.findIndex(i => i.id === item.id);
+          if (itemIndex !== -1) {
+            checklist.items.splice(itemIndex, 1);
+          }
+          console.log('Element został usunięty.', response.data);
+        })
+        .catch(error => {
+          // Obsługa błędu usunięcia
+          console.error('Błąd podczas usuwania elementu.', error);
+          this.toast.error(error.response.data);
+        });
+    },
+    startEditing(checklist) {
+      checklist.editing = true;
+      checklist.updatedName = checklist.name;
+    },
+    cancelChecklistEditing(checklist) {
+      checklist.editing = false;
+    },
+
     getChecklistProgress(checklist) {
       if (checklist.items && checklist.items.length > 0) {
         const totalItems = checklist.items.length;
@@ -1421,22 +1506,6 @@ export default {
         console.error('Failed to update checklist item status:', error);
       }
     },
-    showAssignedUsersModal(item) {
-      const boardId = this.$route.params.boardId;
-      const response = this.fetchBoardMembers(boardId);
-      this.boardMembers = response.data;
-
-      //this.showAssignedUsersDialog = true;
-      //this.fetchCardChecklistItemsMembers(item.id);
-    },
-    showOptionsDropdown(index) {
-      if (this.showOptionsDropdownIndex === index) {
-        this.showOptionsDropdownIndex = null;
-      } else {
-        this.showOptionsDropdownIndex = index;
-      }
-    },
-
     isUserAssigned(item, user) {
       return item.assignedUsers.some(assignedUser => assignedUser.id === user.id);
     },
@@ -1455,6 +1524,7 @@ export default {
         })
         .catch(error => {
           console.error('Failed to assign user to item:', error);
+          this.toast.error(error.response.data);
         });
     },
 

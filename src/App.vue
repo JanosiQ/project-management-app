@@ -39,7 +39,6 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
               <li><router-link class="dropdown-item" to="/profile">Profile</router-link></li>
-              <li><a class="dropdown-item" href="#">Settings</a></li>
               <li>
                 <hr class="dropdown-divider">
               </li>
