@@ -14,6 +14,7 @@
               <span v-if="!showingAddMemberForm" class="fas fa-plus"></span>
             </div>
           </div>
+
           <div class="modal" :class="{ 'd-block': showingAddMemberForm }" @click.self="showAddMemberForm">
             <div class="modal-dialog">
               <div class="modal-content">
@@ -42,14 +43,38 @@
                           {{ member.isAdmin ? 'Admin' : 'Member' }}
                         </button>
                         <div class="dropdown-menu" aria-labelledby="roleDropdown">
-                          <button class="dropdown-item" @click="changeRole(member.id, true)" v-if="!member.isAdmin">Make
-                            Admin</button>
-                          <button class="dropdown-item" @click="changeRole(member.id, false)" v-if="member.isAdmin">Make
-                            Member</button>
+                          <button class="dropdown-item" @click="changeRole(member.id, true)" v-if="!member.isAdmin">
+                            Make Admin
+                          </button>
+                          <button class="dropdown-item" @click="changeRole(member.id, false)" v-if="member.isAdmin">
+                            Make Member
+                          </button>
+                          <button class="dropdown-item" @click="showDeleteMemberModal(member.id)">
+                            Remove Member
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Delete Member Modal -->
+          <div class="modal fade" id="delete-member-modal" tabindex="-1" role="dialog"
+            aria-labelledby="delete-member-modal-label" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="delete-member-modal-label">Confirm Member Removal</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  Are you sure you want to remove this member from the board?
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-danger" @click="deleteMember">Remove</button>
                 </div>
               </div>
             </div>
@@ -93,15 +118,20 @@
                 @click.stop="editCard()">
                 <li><a class="dropdown-item" @click="editCard(card)">Edit name</a></li>
                 <li><a class="dropdown-item" @click="deleteCardModal(card)">Delete</a></li>
+                <li>
+                  <button class="dropdown-item" @click="showMoveCardToList(card)">
+                    Move to another list
+                  </button>
+                </li>
               </ul>
             </div>
             <!-- Display all members assigned to the card -->
             <!-- <div class="card-members">
-              <span v-for="(member, memberIndex) in card.members" :key="memberIndex" class="member me-2">
-                <img :src="member.avatar || 'https://via.placeholder.com/30x30'" :alt="member.login" :title="member.login"
-                  class="rounded-circle me-2 mwh30">
-              </span>
-            </div> -->
+      <span v-for="(member, memberIndex) in card.members" :key="memberIndex" class="member me-2">
+        <img :src="member.avatar || 'https://via.placeholder.com/30x30'" :alt="member.login" :title="member.login"
+          class="rounded-circle me-2 mwh30">
+      </span>
+    </div> -->
           </div>
           <!-- Delete Card Modal -->
           <div class="modal" :class="{ 'd-block': showDeleteCardModal }" @click.self="showDeleteCardModal = false">
@@ -119,7 +149,28 @@
                   <button type="button" class="btn btn-secondary"
                     @click="showDeleteCardModal = false; selectedCard = null;">Cancel</button>
                   <button type="button" class="btn btn-danger"
-                    @click="deleteCard(card); showDeleteCardModal = false;">Delete</button>
+                    @click="deleteCard(); showDeleteCardModal = false;">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Move Card Modal -->
+          <div class="modal" :class="{ 'd-block': showMoveCardModal }" @click.self="showMoveCardModal = false">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Move card to another list</h5>
+                  <button type="button" class="btn-close" @click="showMoveCardModal = false"></button>
+                </div>
+                <div class="modal-body">
+                  <h5>Select list:</h5>
+                  <select class="form-select" v-model="selectedList">
+                    <option v-for="list in lists" :value="list.id" :key="list.id">{{ list.name }}</option>
+                  </select>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" @click="showMoveCardModal = false">Cancel</button>
+                  <button type="button" class="btn btn-danger" @click="moveCardToList(selectedList)">Move</button>
                 </div>
               </div>
             </div>
@@ -347,7 +398,8 @@
                 <button v-if="!checklist.editing" @click="showConfirmationDialog = true; selectedChecklistIndex = index"
                   class="btn btn-secondary">Delete</button>
                 <!-- Confirmation Dialog -->
-                <div class="modal" :class="{ 'd-block': showConfirmationDialog }" @click.self="showConfirmationDialog = false">
+                <div class="modal" :class="{ 'd-block': showConfirmationDialog }"
+                  @click.self="showConfirmationDialog = false">
                   <div class="modal-dialog">
                     <div class="modal-content">
                       <div class="modal-header">
@@ -514,6 +566,8 @@ export default {
       selectedChecklist: null,
       selectedChecklistItem: null,
       selectedChecklistIndex: null,
+      selectedListId: null,
+      selectedCardToMove: null,
       // show
       showAddListModal: false,
       showConfirmationDialog: false,
@@ -524,6 +578,7 @@ export default {
       showingAddMemberForm: false,
       showAddMembersCard: false,
       showAddMembersCardCheckListItem: false,
+      showMoveCardModal: false,
       showAssignedUsersDialog: false, // zmienna do kontrolowania wyświetlania modala
       showIcons: null,
       editingDueDate: false,
@@ -759,7 +814,7 @@ export default {
           console.log(response);
         })
         .catch(error => {
-          
+
           console.error('Failed to update card title:', error);
           this.toast.error(error.response.data);
         });
@@ -772,7 +827,6 @@ export default {
       const boardId = this.$route.params.boardId;
       const login = this.newMember.login;
       const token = this.getToken();
-
       // Pobieranie danych użytkowników
       axios
         .get(`https://cabanoss.azurewebsites.net/users/all?searchingPhrase=${login}`, { headers: { Authorization: `Bearer ${token}` } })
@@ -797,9 +851,8 @@ export default {
 
                   // Resetowanie pól formularza
                   this.newMember.login = '';
-
-                  // Zamykanie formularza dodawania członka
-                  this.showingAddMemberForm = false;
+                  console.log('Użytkownik został dodany')
+                  // Przeładowanie listy przypisanych członków do tablicy
                   this.fetchBoardMembers(this.$route.params.boardId);
                 })
                 .catch(error => {
@@ -839,6 +892,44 @@ export default {
         this.toast.error(error.response.data);
         // Obsłuż błąd w przypadku niepowodzenia zaktualizowania roli użytkownika
       }
+    },
+    showDeleteMemberModal(memberId) {
+      this.memberIdToDelete = memberId; // Przypisanie memberId do zmiennej wewnątrz komponentu
+      $('#delete-member-modal').modal('show'); // Wyświetlenie modala usuwania użytkownika
+    },
+    deleteMember() {
+      const token = localStorage.getItem('token'); // Pobranie tokenu z localStorage
+
+      // Sprawdzenie, czy token jest dostępny
+      if (!token) {
+        console.error('Brak dostępu do tokenu');
+        return;
+      }
+
+      const boardId = this.$route.params.boardId; // Pobranie boardId z $route.params
+
+      // Wywołanie API DELETE do usunięcia użytkownika z tablicy
+
+      axios.delete(`https://cabanoss.azurewebsites.net/members/boards/${boardId}?userId=${this.memberIdToDelete}`, {
+        headers: {
+          Authorization: `Bearer ${token}` // Dodanie tokenu do nagłówka żądania
+        }
+      })
+        .then(response => {
+          // Obsługa odpowiedzi po pomyślnym usunięciu użytkownika
+          this.fetchBoardMembers(this.$route.params.boardId);
+          console.log('Użytkownik został usunięty');
+          this.toast.success('The user has been removed');
+
+          // Wykonaj dodatkowe czynności po usunięciu użytkownika, np. odświeżenie listy członków tablicy
+        })
+        .catch(error => {
+          // Obsługa błędu podczas usuwania użytkownika
+          console.error('Wystąpił błąd podczas usuwania użytkownika', error);
+        })
+        .finally(() => {
+          $('#delete-member-modal').modal('hide'); // Ukrycie modala usuwania użytkownika
+        });
     },
     // Metoda przełączająca widoczność modalnego okna dodawania listy
     toggleListModal() {
@@ -983,8 +1074,27 @@ export default {
           console.log('Successfully added card:', response);
         })
         .catch(error => {
-          console.error('Failed to add card:', error);
-          this.toast.error(error.response.data);
+          if (error.response && error.response.data && error.response.status === 404) {
+            console.error(error);
+            const errorPopup = error.response.data;
+            this.errorPopup = errorPopup;
+            this.toast.error(errorPopup);
+          }
+          else if (error.response && error.response.data.errors && error.response.status === 400) {
+            const errorPopup = Object.values(error.response.data.errors)
+              .map(messages => messages.join('. '))
+              .join('. ');
+            console.error(error);
+            this.errorPopup = errorPopup;
+            this.toast.error(errorPopup);
+          }
+          else if (error.code === "ERR_NETWORK") {
+            console.error(error);
+            this.toast.error(error.message);
+          } else {
+            console.error(error);
+            this.toast.error('User does not exist');
+          }
         });
     },
     editCard(card) {
@@ -1032,6 +1142,33 @@ export default {
         .catch(error => {
           console.error('Failed to delete card:', error);
           this.toast.error(error.response.data);
+        });
+    },
+    showMoveCardToList(card) {
+      this.selectedCardToMove = card.id; // Przypisz obiekt karty do selectedCard
+      this.selectedList = null;
+      this.showMoveCardModal = true;
+      console.log('Zmienna po kliknięciu move to other list: ', this.selectedCardToMove);
+    },
+    moveCardToList(listId) {
+      const test = this.selectedCard;
+      
+      const token = this.getToken(); // Pobieramy token uwierzytelniający
+      // Wywołanie API POST do przeniesienia karty do innej listy
+      axios.post(`https://cabanoss.azurewebsites.net/cards/lists?listId=${listId}&cardId=${this.selectedCardToMove}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(response => {
+          // Obsługa odpowiedzi po pomyślnym przeniesieniu karty
+          console.log('Karta została przeniesiona', response);
+          // Wykonaj dodatkowe czynności po przeniesieniu karty, np. odświeżenie listy kart
+        })
+        .catch(error => {
+          // Obsługa błędu podczas przenoszenia karty
+          console.error('Wystąpił błąd podczas przenoszenia karty', error);
+        })
+        .finally(() => {
+          this.showMoveCardModal = false; // Ukrycie modala przenoszenia karty
         });
     },
     // Metoda wyboru listy do dodania nowej karty
@@ -1379,7 +1516,6 @@ export default {
         this.toast.error(error.response.data);
       }
     },
-
     resetConfirmationDialog() {
       this.showConfirmationDialog = false;
       this.selectedChecklistIndex = null;
@@ -1535,7 +1671,6 @@ export default {
           console.error('Failed to remove user from item:', error);
         });
     },
-
     async uploadAttachment() {
       if (!this.isLinkValid(this.attachmentPath)) {
         // Walidacja nie powiodła się - nieprawidłowy link

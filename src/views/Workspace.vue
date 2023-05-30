@@ -53,7 +53,7 @@
                   </option>
                 </select>
               </div>
-              <button type="submit" class="btn btn-primary">Open</button>
+              <button type="submit" class="btn btn-primary" :disabled="!selectedBoard">Open</button>
             </form>
           </div>
         </div>

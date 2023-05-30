@@ -34,9 +34,9 @@
                 <button v-if="isEditing && editingField === 'email'" type="button" class="btn btn-primary mt-3"
                   @click="saveEmail">Save Changes</button>
               </div>
-              <div class="form-group mb-3" >
+              <div class="form-group mb-3">
                 <div v-if="!changePassword">
-                  <button type="button" class="btn btn-link" @click="toggleChangePassword" >Change password</button>
+                  <button type="button" class="btn btn-link" @click="toggleChangePassword">Change password</button>
                 </div>
                 <label v-if="changePassword" for="password" class="form-label">Password</label>
                 <div v-if="changePassword">
@@ -54,10 +54,35 @@
                   @click="toggleChangePassword">Close</button>
               </div>
             </form>
+            <div class="form-group">
+              <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                Delete Account
+              </button>
+            </div>
+            <!-- Modal -->
+            <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel"
+              aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Account Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    Are you sure you want to delete your account?
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" @click="deleteAccount">Delete</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -128,16 +153,16 @@ export default {
         console.log(response);
       } catch (error) {
         const errorPopup = Object.values(error.response.data.errors)
-              .map(messages => messages.join('. '))
-              .join('. ');
-            console.error(error);
-            this.errorPopup = errorPopup;
-            this.toast.error(errorPopup);
+          .map(messages => messages.join('. '))
+          .join('. ');
+        console.error(error);
+        this.errorPopup = errorPopup;
+        this.toast.error(errorPopup);
         console.error('Failed to save username:', error);
         // Obsłuż błąd w przypadku niepowodzenia zapisu zmiany nazwy użytkownika
       }
     },
-    
+
     async saveEmail() {
       try {
         const token = localStorage.getItem('token');
@@ -200,6 +225,27 @@ export default {
       this.changePassword = !this.changePassword;
       this.isEditing = false;
     },
+    async deleteAccount() {
+      try {
+        const token = localStorage.getItem('token');
+        const url = 'https://cabanoss.azurewebsites.net/users';
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        await axios.delete(url, { headers });
+
+        // Usuń token i login z localStorage
+        localStorage.removeItem('token');
+        localStorage.removeItem('login');
+
+        // Przekieruj na stronę logowania
+        this.$router.push({ path: '/login' });
+      } catch (error) {
+        console.error('Failed to delete account:', error);
+        // Obsłuż błąd w przypadku niepowodzenia usunięcia konta
+      }
+    }
   },
 };
 </script>
