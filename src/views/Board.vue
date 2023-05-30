@@ -14,7 +14,7 @@
               <span v-if="!showingAddMemberForm" class="fas fa-plus"></span>
             </div>
           </div>
-          <div class="modal" :class="{ 'd-block': showingAddMemberForm }">
+          <div class="modal" :class="{ 'd-block': showingAddMemberForm }" @click.self="showAddMemberForm">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
@@ -104,7 +104,7 @@
             </div> -->
           </div>
           <!-- Delete Card Modal -->
-          <div class="modal" :class="{ 'd-block': showDeleteCardModal }">
+          <div class="modal" :class="{ 'd-block': showDeleteCardModal }" @click.self="showDeleteCardModal = false">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
@@ -130,7 +130,7 @@
           <i class="fas fa-plus me-2"></i> Add new card
         </div>
         <!-- Add Card Modal -->
-        <div class="modal" :class="{ 'd-block': showAddCardModal }">
+        <div class="modal" :class="{ 'd-block': showAddCardModal }" @click.self="toggleCardModal">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -158,7 +158,7 @@
       </div>
     </div>
     <!-- Add List Modal -->
-    <div class="modal" :class="{ 'd-block': showAddListModal }">
+    <div class="modal" :class="{ 'd-block': showAddListModal }" @click.self="toggleListModal">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -180,7 +180,7 @@
       </div>
     </div>
     <!-- Delete List Modal -->
-    <div class="modal" :class="{ 'd-block': showDeleteListModal }">
+    <div class="modal" :class="{ 'd-block': showDeleteListModal }" @click.self="showDeleteListModal = false">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -201,7 +201,7 @@
       </div>
     </div>
     <!-- Display card details -->
-    <div :class="{ 'modal-card': selectedCard }">
+    <div :class="{ 'modal-card': selectedCard }" @click.self="hideCardDetails">
       <div class="card-details p-4 rounded mb-4" v-if="selectedCard">
         <div class="card-header d-flex justify-content-between align-items-center mb-3">
           <div v-if="!editingCardTitle" class="card-title h5 mb-0" @click="startEditingCardTitle">{{ selectedCard.name }}
@@ -223,11 +223,11 @@
             </div>
           </div>
 
-          <!-- Board Members -->
-          <div class="modal" :class="{ 'modal-members-list': showAddMembersCard }" @hidden="resetModal">
+          <!-- Assign Board Members To The Card -->
+          <div class="modal" :class="{ 'modal-members-list': showAddMembersCard }">
             <div class="modal-body rounded">
               <div class="modal-header">
-                <h6 class="modal-title">Board members</h6>
+                <h6 class="modal-title">Assign to card</h6>
                 <button type="button" class="btn-close btn-close-sm" @click="showAddMembersCard = false"
                   aria-label="Close"></button>
               </div>
@@ -347,7 +347,7 @@
                 <button v-if="!checklist.editing" @click="showConfirmationDialog = true; selectedChecklistIndex = index"
                   class="btn btn-secondary">Delete</button>
                 <!-- Confirmation Dialog -->
-                <div class="modal" :class="{ 'd-block': showConfirmationDialog }">
+                <div class="modal" :class="{ 'd-block': showConfirmationDialog }" @click.self="showConfirmationDialog = false">
                   <div class="modal-dialog">
                     <div class="modal-content">
                       <div class="modal-header">

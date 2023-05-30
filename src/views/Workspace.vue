@@ -60,7 +60,7 @@
       </div>
     </div>
     <div class="modal" id="delete-modal" tabindex="-1" role="dialog" aria-labelledby="delete-modal-label"
-      aria-hidden="true" :class="{ 'd-block': showDeleteModal }">
+      aria-hidden="true" :class="{ 'd-block': showDeleteModal }" @click.self="showDeleteModal = false">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
