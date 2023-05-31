@@ -18,18 +18,19 @@
               aria-expanded="false">
               Account
             </a>
-            <ul   class="dropdown-menu" aria-labelledby="navbarDropdown1">
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
               <li><router-link class="dropdown-item" to="/login">Login</router-link></li>
               <li><router-link class="dropdown-item" to="/signup">Sign up!</router-link></li>
             </ul>
           </li>
           <li class="nav-item dropdown">
-            <li v-if="isLoggedIn"><router-link class="dropdown-item" to="/">My boards</router-link></li>
+          <li v-if="isLoggedIn"><router-link class="dropdown-item" to="/">My boards</router-link></li>
           </li>
         </ul>
-
-
         <ul class="navbar-nav ms-auto">
+          <!-- <button @click="toggleTheme" class="btn" :class="themeButtonClasses">
+            <i :class="themeIconClasses"></i>
+          </button> -->
           <!-- Przycisk logowania lub informacje o zalogowanym użytkowniku -->
           <li v-if="isLoggedIn" class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
@@ -68,6 +69,7 @@ export default {
   },
   data() {
     return {
+      isDarkTheme: false,
       isLoggedIn: false, // Zmienna przechowująca informację o zalogowaniu użytkownika
       login: '', // Zmienna przechowująca login użytkownika
     };
@@ -80,7 +82,20 @@ export default {
       this.updateLoginStatus(); // Aktualizacja statusu logowania i loginu użytkownika po zmianie ścieżki
     },
   },
+  computed: {
+    themeButtonClasses() {
+      return this.isDarkTheme ? 'btn-dark' : 'btn-light'; // Ustaw odpowiednią klasę tła przycisku w zależności od motywu
+    },
+    themeIconClasses() {
+      return this.isDarkTheme ? 'fas fa-moon' : 'fas fa-sun'; // Ustaw odpowiednie klasy ikon w zależności od motywu
+    },
+  },
   methods: {
+    toggleTheme() {
+      this.isDarkTheme = !this.isDarkTheme;
+      const body = document.querySelector('body');
+      body.dataset.bsTheme = this.isDarkTheme ? 'dark' : 'light'; // Aktualizuj atrybut data-bs-theme
+    },
     logout() {
       localStorage.removeItem('token'); // Usunięcie tokena z pamięci
       this.toast.success('Signed out successfully');

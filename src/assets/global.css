@@ -263,7 +263,9 @@ ul.assigned-users.list-unstyled.item li{
     padding: 5px;
 }
 
-
+/* .card:hover,li.checklist-item.list-group-item.d-flex:hover {
+    background-color: #1f2225;
+} */
 
 .modal-members-list {
     display: contents;

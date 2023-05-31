@@ -434,7 +434,7 @@
                   <div class="d-flex w-100 justify-content-between">
                     <span style="padding: 6px;" :class="{ completed: item.isComplete }">{{ item.description }}</span>
                     <span class="icons" v-show="item.showIcons">
-                      <i class="fas fa-user-plus" @click="fetchCardChecklistItemsMembers(item.id)"></i>
+                      <i class="fas fa-user-plus" @click="fetchCardChecklistItemsMembers(item.id)" style="margin: 8px;"></i>
                       <!-- Okno modalne z listą użytkowników przypisanych do elementu checklisty -->
                       <div class="modal" v-if="item.showUserModal"
                         :class="{ 'modal-members-list items': item.showUserModal }"
@@ -568,6 +568,7 @@ export default {
       selectedChecklistIndex: null,
       selectedListId: null,
       selectedCardToMove: null,
+      selectedCardName: null,
       // show
       showAddListModal: false,
       showConfirmationDialog: false,
@@ -799,7 +800,7 @@ export default {
       this.editedCardTitle = this.selectedCard.name;
       this.editingCardTitle = true;
     },
-    saveCardTitle() {
+    async saveCardTitle() {
       const cardId = this.selectedCard.id;
       const newTitle = this.editedCardTitle;
       const token = this.getToken();
@@ -823,7 +824,7 @@ export default {
       this.showingAddMemberForm = !this.showingAddMemberForm;
       this.newMember.login = '';
     },
-    addMember() {
+    async addMember() {
       const boardId = this.$route.params.boardId;
       const login = this.newMember.login;
       const token = this.getToken();
@@ -897,7 +898,7 @@ export default {
       this.memberIdToDelete = memberId; // Przypisanie memberId do zmiennej wewnątrz komponentu
       $('#delete-member-modal').modal('show'); // Wyświetlenie modala usuwania użytkownika
     },
-    deleteMember() {
+    async deleteMember() {
       const token = localStorage.getItem('token'); // Pobranie tokenu z localStorage
 
       // Sprawdzenie, czy token jest dostępny
@@ -952,7 +953,7 @@ export default {
       console.log('modalList', list);
     },
     // Metoda dodająca nową listę
-    addNewList() {
+    async addNewList() {
       const newList = {
         boardId: this.$route.params.boardId,
         name: this.newListTitle
@@ -987,7 +988,7 @@ export default {
         });
     },
     // Metoda edytująca nazwę listy
-    editList(list) {
+    async editList(list) {
       this.selectedCard = null;
       // Pobieramy aktualną nazwę listy
       const currentTitle = list.name;
@@ -1034,7 +1035,7 @@ export default {
           });
       }
     },
-    deleteList() {
+    async deleteList() {
       const token = this.getToken(); // Pobieramy token uwierzytelniający
       const listId = this.modalList.id// Pobieramy ID listy do usunięcia
 
@@ -1097,7 +1098,7 @@ export default {
           }
         });
     },
-    editCard(card) {
+    async editCard(card) {
       this.selectedCard = null;
       if (card) {
         const currentName = card.name;
@@ -1127,7 +1128,7 @@ export default {
         }
       }
     },
-    deleteCard() {
+    async deleteCard() {
       const token = this.getToken(); // Pobieramy token uwierzytelniający
       const cardId = this.modalCard.id; // Pobieramy ID karty do usunięcia
       this.selectedCard = null;
@@ -1146,26 +1147,53 @@ export default {
     },
     showMoveCardToList(card) {
       this.selectedCardToMove = card.id; // Przypisz obiekt karty do selectedCard
+      this.selectedCardName = card.name;
       this.selectedList = null;
       this.showMoveCardModal = true;
       console.log('Zmienna po kliknięciu move to other list: ', this.selectedCardToMove);
     },
-    moveCardToList(listId) {
-      const test = this.selectedCard;
-      
+    async moveCardToList(listId) {
+      const cardId = this.selectedCardToMove;
+      const boardId = this.$route.params.boardId;
+      const nameOfCard = {
+        name: this.selectedCardName
+      }
       const token = this.getToken(); // Pobieramy token uwierzytelniający
       // Wywołanie API POST do przeniesienia karty do innej listy
-      axios.post(`https://cabanoss.azurewebsites.net/cards/lists?listId=${listId}&cardId=${this.selectedCardToMove}`, {
+      axios.post(`https://cabanoss.azurewebsites.net/cards/lists?listId=${listId}&cardId=${cardId}`, nameOfCard,{
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(response => {
           // Obsługa odpowiedzi po pomyślnym przeniesieniu karty
           console.log('Karta została przeniesiona', response);
+          this.toast.success('The card has been moved');
           // Wykonaj dodatkowe czynności po przeniesieniu karty, np. odświeżenie listy kart
+          this.fetchLists(boardId);
         })
         .catch(error => {
           // Obsługa błędu podczas przenoszenia karty
           console.error('Wystąpił błąd podczas przenoszenia karty', error);
+          if (error.response && error.response.data && error.response.status === 404) {
+            console.error(error);
+            const errorPopup = error.response.data;
+            this.errorPopup = errorPopup;
+            this.toast.error(errorPopup);
+          }
+          else if (error.response && error.response.data.errors && error.response.status === 400) {
+            const errorPopup = Object.values(error.response.data.errors)
+              .map(messages => messages.join('. '))
+              .join('. ');
+            console.error(error);
+            this.errorPopup = errorPopup;
+            this.toast.error(errorPopup);
+          } 
+          else if(error.code === "ERR_NETWORK"){
+            console.error(error);
+            this.toast.error(error.message);
+          }else {
+            console.error(error);
+            this.toast.error('An error occurred while transferring the card');
+          }
         })
         .finally(() => {
           this.showMoveCardModal = false; // Ukrycie modala przenoszenia karty
@@ -1264,7 +1292,7 @@ export default {
       this.newDescription = '';
     },
     // Metoda zapisująca opis karty
-    saveDescription() {
+    async saveDescription() {
       const newDescription = this.newDescription.trim(); // Pobieramy wprowadzoną deskrypcję karty
 
       if (newDescription !== '') {
@@ -1542,7 +1570,7 @@ export default {
         this.toast.error(error.response.data);
       }
     },
-    editListItem(checklist, item) {
+    async editListItem(checklist, item) {
       const currentName = item.description;
       const newName = prompt("Enter new item name:", currentName);
 
@@ -1568,7 +1596,7 @@ export default {
           });
       }
     },
-    deleteListItem(checklist, item) {
+    async deleteListItem(checklist, item) {
       // Wywołanie API DELETE do usunięcia elementu
       const apiUrl = `https://cabanoss.azurewebsites.net/elements?elementId=${item.id}`;
 
@@ -1636,7 +1664,7 @@ export default {
     isUserAssigned(item, user) {
       return item.assignedUsers.some(assignedUser => assignedUser.id === user.id);
     },
-    assignUserToItem(item, user) {
+    async assignUserToItem(item, user) {
       const elementId = item.id;
       const userId = user.id;
       const token = this.getToken();
@@ -1654,7 +1682,7 @@ export default {
           this.toast.error(error.response.data);
         });
     },
-    removeUserFromItem(item, user) {
+    async removeUserFromItem(item, user) {
       const elementId = item.id;
       const userId = user.id;
       const token = this.getToken();
