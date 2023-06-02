@@ -1,9 +1,9 @@
 <template>
   <nav class="navbar navbar-expand-md">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/">
+      <router-link class="navbar-brand" to="/">
         <img style="max-width: 30px;" src="./assets/logo.png" alt="Logo strony">
-      </a>
+      </router-link>
 
       <!-- Przycisk hamburgera -->
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -13,24 +13,17 @@
 
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-md-0">
-          <li v-if="!isLoggedIn" class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown"
-              aria-expanded="false">
-              Account
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
-              <li><router-link class="dropdown-item" to="/login">Login</router-link></li>
-              <li><router-link class="dropdown-item" to="/signup">Sign up!</router-link></li>
-            </ul>
+          <li v-if="isLoggedIn" class="nav-item"> <router-link class="nav-link active" aria-current="page" to="/">My
+              boards</router-link></li>
+          <li v-if="!isLoggedIn" class="nav-item"><router-link class="nav-link active" to="/login">Login</router-link>
           </li>
-          <li class="nav-item dropdown">
-          <li v-if="isLoggedIn"><router-link class="dropdown-item" to="/">My boards</router-link></li>
+          <li v-if="!isLoggedIn" class="nav-item"><router-link class="nav-link active" to="/signup">Sign up!</router-link>
           </li>
         </ul>
         <ul class="navbar-nav ms-auto">
-          <!-- <button @click="toggleTheme" class="btn" :class="themeButtonClasses">
-            <i :class="themeIconClasses"></i>
-          </button> -->
+          <div @click="toggleTheme" :class="currentTheme === 'light' ? 'light-theme' : 'dark-theme'">
+            <i :class="currentTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon'" style="font-size: 36px;"></i>
+          </div>
           <!-- Przycisk logowania lub informacje o zalogowanym użytkowniku -->
           <li v-if="isLoggedIn" class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
@@ -46,11 +39,6 @@
               <li><a class="dropdown-item" @click="logout()">Log out</a></li>
             </ul>
           </li>
-          <li v-else class="nav-item">
-            <button class="btn btn-primary">
-              <router-link class="nav-link" to="/login">Login</router-link>
-            </button>
-          </li>
         </ul>
       </div>
     </div>
@@ -59,6 +47,7 @@
 </template>
 <script>
 import { useToast } from "vue-toastification";
+import Cookies from 'js-cookie';
 export default {
   setup() {
     // Get toast interface
@@ -70,31 +59,45 @@ export default {
   data() {
     return {
       isDarkTheme: false,
+      currentTheme: '', // Początkowo pusta wartość
       isLoggedIn: false, // Zmienna przechowująca informację o zalogowaniu użytkownika
       login: '', // Zmienna przechowująca login użytkownika
     };
   },
   mounted() {
     this.updateLoginStatus(); // Aktualizacja statusu logowania i loginu użytkownika po załadowaniu komponentu
+    // Sprawdź, czy w localStorage istnieje zapisany motyw
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) {
+      this.currentTheme = storedTheme;
+      this.updateBodyTheme();
+    }
   },
   watch: {
     $route(to, from) {
       this.updateLoginStatus(); // Aktualizacja statusu logowania i loginu użytkownika po zmianie ścieżki
     },
   },
-  computed: {
-    themeButtonClasses() {
-      return this.isDarkTheme ? 'btn-dark' : 'btn-light'; // Ustaw odpowiednią klasę tła przycisku w zależności od motywu
-    },
-    themeIconClasses() {
-      return this.isDarkTheme ? 'fas fa-moon' : 'fas fa-sun'; // Ustaw odpowiednie klasy ikon w zależności od motywu
-    },
+  created() {
+    // Odczytaj zapisany motyw z cookies
+    const savedTheme = Cookies.get('theme');
+
+    // Ustaw odpowiednią wartość dla isDarkMode na podstawie zapisanego motywu
+    this.isDarkMode = savedTheme === 'dark';
   },
   methods: {
     toggleTheme() {
-      this.isDarkTheme = !this.isDarkTheme;
-      const body = document.querySelector('body');
-      body.dataset.bsTheme = this.isDarkTheme ? 'dark' : 'light'; // Aktualizuj atrybut data-bs-theme
+      this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+
+      // Zapisz wybrany motyw w localStorage
+      localStorage.setItem('theme', this.currentTheme);
+
+      this.updateBodyTheme();
+    },
+    updateBodyTheme() {
+      // Aktualizuj motyw w body
+      const bodyElement = document.querySelector('body');
+      bodyElement.setAttribute('data-bs-theme', this.currentTheme);
     },
     logout() {
       localStorage.removeItem('token'); // Usunięcie tokena z pamięci

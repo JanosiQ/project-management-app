@@ -94,7 +94,7 @@
           <div class="dropdown">
             <button class="btn btn-secondary btn-icon" type="button" id="boardOptionsDropdown" data-bs-toggle="dropdown"
               aria-expanded="false">
-              <span class="fas fa-ellipsis-h"></span>
+              <i class="fas fa-ellipsis-h"></i>
             </button>
             <ul class="dropdown-menu" aria-labelledby="boardOptionsDropdown">
               <li><a class="dropdown-item" @click="editList(list)">Edit name</a></li>
@@ -434,7 +434,8 @@
                   <div class="d-flex w-100 justify-content-between">
                     <span style="padding: 6px;" :class="{ completed: item.isComplete }">{{ item.description }}</span>
                     <span class="icons" v-show="item.showIcons">
-                      <i class="fas fa-user-plus" @click="fetchCardChecklistItemsMembers(item.id)" style="margin: 8px;"></i>
+                      <i class="fas fa-user-plus" @click="fetchCardChecklistItemsMembers(item.id)"
+                        style="margin: 8px;"></i>
                       <!-- Okno modalne z listą użytkowników przypisanych do elementu checklisty -->
                       <div class="modal" v-if="item.showUserModal"
                         :class="{ 'modal-members-list items': item.showUserModal }"
@@ -1160,7 +1161,7 @@ export default {
       }
       const token = this.getToken(); // Pobieramy token uwierzytelniający
       // Wywołanie API POST do przeniesienia karty do innej listy
-      axios.post(`https://cabanoss.azurewebsites.net/cards/lists?listId=${listId}&cardId=${cardId}`, nameOfCard,{
+      axios.post(`https://cabanoss.azurewebsites.net/cards/lists?listId=${listId}&cardId=${cardId}`, nameOfCard, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(response => {
@@ -1186,11 +1187,11 @@ export default {
             console.error(error);
             this.errorPopup = errorPopup;
             this.toast.error(errorPopup);
-          } 
-          else if(error.code === "ERR_NETWORK"){
+          }
+          else if (error.code === "ERR_NETWORK") {
             console.error(error);
             this.toast.error(error.message);
-          }else {
+          } else {
             console.error(error);
             this.toast.error('An error occurred while transferring the card');
           }
@@ -1703,6 +1704,7 @@ export default {
       if (!this.isLinkValid(this.attachmentPath)) {
         // Walidacja nie powiodła się - nieprawidłowy link
         console.error('Invalid attachment link');
+        this.toast.error('Invalid attachment link');
         return;
       }
 
@@ -1758,6 +1760,7 @@ export default {
         this.attachmentPath = '';
       } catch (error) {
         console.error('Failed to upload attachment:', error);
+        this.toast.error('Name is too short');
       }
     },
     editAttachment(attachment) {

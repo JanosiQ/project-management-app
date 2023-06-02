@@ -1,3 +1,77 @@
+/* Motyw jasny */
+[data-bs-theme="light"] {
+
+    .form-control,
+    .list-group-item {
+        border-color: #c0c2c7;
+    }
+
+    .dropdown .btn-secondary {
+        --bs-btn-color: #000;
+    }
+
+    .dropdown .btn-check:checked+.dropdown .btn,
+    .dropdown .btn.active,
+    .dropdown .btn.show,
+    .dropdown .btn:first-child:active,
+    .dropdown :not(.btn-check)+.dropdown .btn:active,
+    .dropdown .btn:hover {
+        color: #8a8a8a;
+    }
+
+    .dropdown-item:focus,
+    .dropdown-item:hover {
+        background-color: #dfdfdf;
+    }
+
+    .border {
+        border: var(--bs-border-width) var(--bs-border-style) #c0c2c7 !important;
+    }
+
+    .card {
+        --bs-card-border-color: #c0c2c7;
+    }
+
+    .card-details {
+        background: #f8f8ff;
+    }
+
+    .modal-members-list .modal-body {
+        background: #e0e0e0;
+    }
+}
+
+/* Motyw ciemny */
+[data-bs-theme="dark"] {
+
+    .modal-content,
+    .form-control,
+    description:hover {
+        background-color: var(--bs-body-bg);
+    }
+
+    .btn-check:checked+.btn,
+    .btn.active,
+    .btn.show,
+    .btn:first-child:active,
+    :not(.btn-check)+.btn:active,
+    .btn:hover {
+        color: #8a8a8a;
+    }
+
+    .add-member {
+        background-color: rgb(34 37 41);
+    }
+
+    .card-details {
+        background: #282d31;
+    }
+
+    .modal-members-list .modal-body {
+        background: #222529;
+    }
+}
+
 textarea {
     resize: none !important;
 }
@@ -31,20 +105,11 @@ textarea {
     flex-direction: inherit;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-}
-
 .cards,
 .add-card,
 .add-list,
 .description {
     cursor: pointer;
-    transition: all 0.5s;
-}
-
-.description:hover {
-    background-color: #222529;
     transition: all 0.5s;
 }
 
@@ -74,7 +139,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .card-details {
-    background: #282d31;
     position: fixed;
     top: 50%;
     left: 50%;
@@ -90,9 +154,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .card-details .card-details-body {
     max-height: 80vh;
     overflow-y: auto !important;
-}
-.card-details-section i.fas.fa-plus{
-    cursor: pointer;
 }
 
 .card-details .card-header {
@@ -143,7 +204,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     font-size: 14px;
     margin-bottom: 5px;
 }
-.comment-header span.fas.fa-ellipsis-v.me-2{
+
+.comment-header span.fas.fa-ellipsis-v.me-2 {
     margin: 0 0 0 0.5rem;
 }
 
@@ -151,15 +213,34 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     font-size: 16px;
     line-height: 1.5;
 }
-.description,.comments, .add-comment.mb-3 textarea.form-control, ul.checklist.list-group.list-unstyled,.attachment-info, div textarea.form-control,.progress,.checklist-details{
+
+.description,
+.comments,
+.add-comment.mb-3 textarea.form-control,
+ul.checklist.list-group.list-unstyled,
+.attachment-info,
+div textarea.form-control,
+.progress,
+.checklist-details {
     width: 99%;
 }
-ul.checklist.list-group.list-unstyled li,li.checklist-item.list-group-item.d-flex label input{
+
+ul.checklist.list-group.list-unstyled li,
+li.checklist-item.list-group-item.d-flex label input,
+.dark-theme,
+select,
+.add-member-button,
+.plus-icon,
+i.fas.fa-plus-circle.member.me-2,
+.light-theme,
+.card-details-section i.fas.fa-plus {
     cursor: pointer;
 }
-div input.form-control.mb-2{
+
+div input.form-control.mb-2 {
     width: auto;
 }
+
 .card-details .add-comment textarea {
     width: 99%;
     min-height: 60px;
@@ -220,20 +301,15 @@ div input.form-control.mb-2{
     position: absolute;
     right: 1rem;
     top: 7.5rem;
-    background-color: rgb(34 37 41);
-
 }
 
-.add-member-button,
-.plus-icon,i.fas.fa-plus-circle.member.me-2 {
-    cursor: pointer;
-}
-i.fas.fa-plus-circle.member.me-2{
+i.fas.fa-plus-circle.member.me-2 {
     font-size: 35px;
     margin: 0px;
     position: relative;
     top: 10px;
 }
+
 .btn-close-sm {
     font-size: 12px;
 }
@@ -241,9 +317,9 @@ i.fas.fa-plus-circle.member.me-2{
 .modal-members-list .modal-body {
     padding: 0 10px;
     width: fit-content;
-    background: #222529;
 }
-.modal.modal-members-list.items .modal-body.rounded{
+
+.modal.modal-members-list.items .modal-body.rounded {
     position: absolute;
     right: 0px;
     top: 53px;
@@ -252,11 +328,12 @@ i.fas.fa-plus-circle.member.me-2{
     width: fit-content;
     background: #292d31;
 }
+
 .modal-members-list .modal-header {
     padding: 5px;
 }
 
-ul.assigned-users.list-unstyled.item li{
+ul.assigned-users.list-unstyled.item li {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -313,9 +390,15 @@ input:-webkit-autofill:active {
     -webkit-text-fill-color: #fff !important;
     caret-color: #fff;
 }
-
+body[data-bs-theme="light"] input:-webkit-autofill,
+body[data-bs-theme="light"] input:-webkit-autofill:hover,
+body[data-bs-theme="light"] input:-webkit-autofill:focus,
+body[data-bs-theme="light"] input:-webkit-autofill:active{
+    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: #000 !important;
+    caret-color: #000;
+}
 .modal-content {
-    background-color: #222529;
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
