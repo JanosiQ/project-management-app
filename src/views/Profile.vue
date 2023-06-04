@@ -82,7 +82,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -234,7 +233,10 @@ export default {
         };
 
         await axios.delete(url, { headers });
-
+        this.toast.success('Account deleted successfully');
+        const modalElement = document.getElementById('confirmDeleteModal');
+        const bootstrapModal = bootstrap.Modal.getInstance(modalElement);
+        bootstrapModal.hide();
         // Usuń token i login z localStorage
         localStorage.removeItem('token');
         localStorage.removeItem('login');

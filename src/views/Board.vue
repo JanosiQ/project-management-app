@@ -1095,7 +1095,7 @@ export default {
             this.toast.error(error.message);
           } else {
             console.error(error);
-            this.toast.error('User does not exist');
+            this.toast.error('An error occurred');
           }
         });
     },
@@ -1495,8 +1495,27 @@ export default {
           });
 
         } catch (error) {
-          console.error('Failed to add checklist:', error);
-          this.toast.error(error.response.data);
+          if (error.response && error.response.data && error.response.status === 404) {
+            console.error(error);
+            const errorPopup = error.response.data;
+            this.errorPopup = errorPopup;
+            this.toast.error(errorPopup);
+          }
+          else if (error.response && error.response.data.errors && error.response.status === 400) {
+            const errorPopup = Object.values(error.response.data.errors)
+              .map(messages => messages.join('. '))
+              .join('. ');
+            console.error(error);
+            this.errorPopup = errorPopup;
+            this.toast.error(errorPopup);
+          }
+          else if (error.code === "ERR_NETWORK") {
+            console.error(error);
+            this.toast.error(error.message);
+          } else {
+            console.error(error);
+            this.toast.error('An error occurred');
+          }
         }
       }
     },

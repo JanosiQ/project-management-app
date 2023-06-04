@@ -109,7 +109,7 @@ export default {
     this.fetchUserBoards(); // Wywołanie metody do pobrania tablic użytkownika przy tworzeniu komponentu
   },
   methods: {
-    addBoard() {
+    async addBoard() {
       const data = {
         name: this.newBoard.name, // Przygotowanie danych do wysłania - nazwa nowej tablicy
       };
@@ -139,17 +139,17 @@ export default {
             console.error(error);
             this.errorPopup = errorPopup;
             this.toast.error(errorPopup);
-          } 
-          else if(error.code === "ERR_NETWORK"){
+          }
+          else if (error.code === "ERR_NETWORK") {
             console.error(error);
             this.toast.error(error.message);
-          }else {
+          } else {
             console.error(error);
             this.toast.error('User does not exist');
           }
         });
     },
-    fetchUserBoards() {
+    async fetchUserBoards() {
       const token = localStorage.getItem('token'); // Pobranie tokena autoryzacyjnego z local storage
       const headers = {
         Authorization: `Bearer ${token}`, // Ustawienie nagłówka z tokenem
@@ -176,30 +176,39 @@ export default {
       console.log('modalBoard', board);
     },
     async editBoard(board) {
-      const currentName = board.name; // Aktualna nazwa tablicy
-      const newName = prompt("Wpisz nową nazwę:", currentName); // Zapytanie użytkownika o nową nazwę
+      const currentName = board.name;
+      const newName = prompt("Type new board name:", currentName);
       if (newName !== null && newName.trim() !== "" && newName !== currentName) {
-
-        const token = localStorage.getItem('token'); // Pobranie tokena autoryzacyjnego z local storage
-        const headers = {
-          Authorization: `Bearer ${token}`, // Ustawienie nagłówka z tokenem
-        };
-        const data = {
-          name: board.name, // Przygotowanie danych do wysłania - nowa nazwa tablicy
-        };
-        axios
-          .put(`https://cabanoss.azurewebsites.net/boards?boardId=${board.id}`, data, { headers }) // Wywołanie żądania PUT, aby zaktualizować nazwę tablicy
-          .then(() => {
-            board.name = newName.trim(); // Aktualizacja nazwy tablicy
-            this.toast.success('Board name updated successfully');
-          })
-          .catch(error => {
+        try {
+          const token = localStorage.getItem('token');
+          const headers = {
+            Authorization: `Bearer ${token}`,
+          };
+          const data = {
+            name: newName,
+          };
+          await axios.put(`https://cabanoss.azurewebsites.net/boards?boardId=${board.id}`, data, { headers })
+            .then(response => {
+              board.name = newName.trim();
+              console.log('Board name updated successfully:', response);
+              this.toast.success('Board name updated successfully');
+            });
+        } catch (error) {
+          console.error(error);
+          if (error.response && error.response.data.errors && error.response.status === 400) {
+            const errorPopup = Object.values(error.response.data.errors)
+              .map(messages => messages.join('. '))
+              .join('. ');
             console.error(error);
+            this.errorPopup = errorPopup;
+            this.toast.error(errorPopup);
+          }else{
             this.toast.error(error.response.data);
-          });
+          }
+        }
       }
     },
-    deleteBoard() {
+    async deleteBoard() {
       const token = localStorage.getItem('token'); // Pobranie tokena autoryzacyjnego z local storage
       const boardId = this.modalBoard.id; // ID tablicy do usunięcia
       const headers = {
