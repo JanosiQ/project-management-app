@@ -9,7 +9,7 @@
           <div class="card-body">
             <form>
               <div class="form-group">
-                <label for="login">Full Name:</label>
+                <label for="login">Login:</label>
                 <input type="text" class="form-control" id="login" v-model="login" required>
               </div>
               <div class="form-group">
@@ -77,34 +77,34 @@ export default {
     };
   },
   methods: {
+    // Metoda podglądu hasła
     togglePasswordVisibility() {
       this.passwordVisible = !this.passwordVisible;
     },
-    createAccount() {
+    async createAccount() {
       const payload = {
         login: this.login,
         email: this.email,
         password: this.password,
         confirmPassword: this.confirmPassword
       };
-
       const config = {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json' // Dodaj ten nagłówek
+          'Accept': 'application/json'
         }
       };
-
       // Wywołanie endpointu POST /accounts/register
       axios.post('https://cabanoss.azurewebsites.net/accounts/register', payload, config)
         .then(() => {
           console.log('Account created successfully');
-          // Wyświetl komunikat sukcesu logowania
+          // Wyświetl komunikat sukcesu rejestracji
           this.toast.success('Account created successfully');
           // Przekierowanie użytkownika na stronę logowania
           this.$router.push('/login');
         })
         .catch(error => {
+          // Wyświetl komunikat niepowodzenia rejestracji
           if (error.response && error.response.status === 400 && error.response.data.errors) {
             const errorPopup = Object.values(error.response.data.errors)
               .map(messages => messages.join('. '))

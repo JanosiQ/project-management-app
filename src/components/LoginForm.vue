@@ -50,23 +50,31 @@ export default {
     }
   },
   methods: {
-    loginApp() {
+    async loginApp() {
+      // URL endpoint do żądania logowania
       const apiUrl = 'https://cabanoss.azurewebsites.net/accounts/login';
+      // Dane zawierające login i hasło do wysłania w żądaniu
       const data = {
         login: this.login,
         password: this.password
       };
+      // Wysłanie żądania POST do API logowania
       axios.post(apiUrl, data)
         .then(response => {
           console.log(response);
+          // Pobranie tokenu i loginu użytkownika z odpowiedzi API
           const token = response.data.token;
           const login = response.data.user.login;
+          // Zapisanie tokenu i loginu w localStorage
           localStorage.setItem('token', token);
           localStorage.setItem('login', login);
+          // Wyświetlenie komunikatu o sukcesie logowania
           this.toast.success('Successfully logged in');
+          // Przekierowanie użytkownika na stronę główną
           this.$router.push({ path: '/' });
         })
         .catch(error => {
+          // Obsługa błędów związanych z odpowiedzią API
           if (error.response && error.response.data && error.response.status === 404) {
             console.error(error);
             const errorPopup = error.response.data;

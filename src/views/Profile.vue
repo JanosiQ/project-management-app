@@ -142,15 +142,20 @@ export default {
         const data = JSON.stringify({
           login: this.login,
         });
-
         const response = await axios.put(url, data, { headers });
         this.getUserData();
         this.isEditing = false;
-        this.toast.success('Username changed successfully'); // Pomyślnie zaktualizowano nazwę użytkownika
-        // Wykonaj odpowiednie operacje po zaktualizowaniu nazwy użytkownika
+        // Wyświetl komunikat pomyślnie zaktualizowano nazwę użytkownika
+        this.toast.success('Username changed successfully');
+        // Aktualizacja wartości w lokalnym przechowywaniu
         localStorage.setItem('login', this.login);
+        // Odczytaj nazwę użytkownika z localStorage
+        const username = localStorage.getItem('login');
+        // Wyświetl nazwę użytkownika w pasku nawigacyjnym
+        document.getElementById('profileName').textContent = username;
         console.log(response);
       } catch (error) {
+        // Wyświetl błąd w przypadku niepowodzenia
         const errorPopup = Object.values(error.response.data.errors)
           .map(messages => messages.join('. '))
           .join('. ');
@@ -158,10 +163,8 @@ export default {
         this.errorPopup = errorPopup;
         this.toast.error(errorPopup);
         console.error('Failed to save username:', error);
-        // Obsłuż błąd w przypadku niepowodzenia zapisu zmiany nazwy użytkownika
       }
     },
-
     async saveEmail() {
       try {
         const token = localStorage.getItem('token');
@@ -231,7 +234,6 @@ export default {
         const headers = {
           Authorization: `Bearer ${token}`,
         };
-
         await axios.delete(url, { headers });
         this.toast.success('Account deleted successfully');
         const modalElement = document.getElementById('confirmDeleteModal');
@@ -240,7 +242,6 @@ export default {
         // Usuń token i login z localStorage
         localStorage.removeItem('token');
         localStorage.removeItem('login');
-
         // Przekieruj na stronę logowania
         this.$router.push({ path: '/login' });
       } catch (error) {

@@ -29,7 +29,7 @@
             <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
               aria-expanded="false">
               <img src="https://via.placeholder.com/40x40" alt="Avatar" class="rounded-circle me-2 mwh40">
-              {{ login }}
+              <span id="profileName">{{ login }}</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
               <li><router-link class="dropdown-item" to="/profile">Profile</router-link></li>
