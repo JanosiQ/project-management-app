@@ -5,9 +5,8 @@
     .list-group-item {
         border-color: #c0c2c7;
     }
-
-    .dropdown .btn-secondary {
-        --bs-btn-color: #000;
+    .dropdown .fas {
+        color: #000;
     }
 
     .dropdown .btn-check:checked+.dropdown .btn,
@@ -69,6 +68,9 @@
 
     .modal-members-list .modal-body {
         background: #222529;
+    }
+    .modal.modal-members-list.items .modal-body.rounded {
+        background: #292d31;
     }
 }
 
@@ -326,7 +328,6 @@ i.fas.fa-plus-circle.member.me-2 {
     z-index: inherit;
     padding: 0 10px;
     width: fit-content;
-    background: #292d31;
 }
 
 .modal-members-list .modal-header {
