@@ -929,17 +929,13 @@ export default {
     },
     async deleteMember() {
       const token = localStorage.getItem('token'); // Pobranie tokenu z localStorage
-
       // Sprawdzenie, czy token jest dostępny
       if (!token) {
         console.error('Brak dostępu do tokenu');
         return;
       }
-
       const boardId = this.$route.params.boardId; // Pobranie boardId z $route.params
-
       // Wywołanie API DELETE do usunięcia użytkownika z tablicy
-
       axios.delete(`https://cabanoss.azurewebsites.net/members/boards/${boardId}?userId=${this.memberIdToDelete}`, {
         headers: {
           Authorization: `Bearer ${token}` // Dodanie tokenu do nagłówka żądania
@@ -956,18 +952,42 @@ export default {
         .catch(error => {
           // Obsługa błędu podczas usuwania użytkownika
           console.error('Wystąpił błąd podczas usuwania użytkownika', error);
+          this.toast.error('Something went wrong');
         })
         .finally(() => {
           $('#delete-member-modal').modal('hide'); // Ukrycie modala usuwania użytkownika
         });
     },
     async leaveBoard() {
-      this.deleteMember();
-      // Wyświetlanie komunikatu typu toast
-      this.toast.success('Successfully left the board');
-      $('#leave-board-modal').modal('hide'); // Ukrycie modala usuwania użytkownika
-      // Przekierowanie użytkownika na stronę główną
-      this.$router.push('/');
+      const token = localStorage.getItem('token'); // Pobranie tokenu z localStorage
+      // Sprawdzenie, czy token jest dostępny
+      if (!token) {
+        console.error('Brak dostępu do tokenu');
+        return;
+      }
+      const boardId = this.$route.params.boardId; // Pobranie boardId z $route.params
+      // Wywołanie API DELETE do usunięcia użytkownika z tablicy
+      axios.delete(`https://cabanoss.azurewebsites.net/members/boards/${boardId}?userId=${this.memberIdToDelete}`, {
+        headers: {
+          Authorization: `Bearer ${token}` // Dodanie tokenu do nagłówka żądania
+        }
+      })
+        .then(response => {
+          // Obsługa odpowiedzi po pomyślnym usunięciu użytkownika
+          this.fetchBoardMembers(this.$route.params.boardId);
+          console.log('Użytkownik opuścił tablice');
+          this.toast.success('Successfully left the board');
+          this.$router.push('/');
+          // Wykonaj dodatkowe czynności po usunięciu użytkownika, np. odświeżenie listy członków tablicy
+        })
+        .catch(error => {
+          // Obsługa błędu podczas usuwania użytkownika
+          console.error('Wystąpił błąd podczas usuwania użytkownika', error);
+          this.toast.error('You are the creator, you cannot leave the board!');
+        })
+        .finally(() => {
+          $('#leave-board-modal').modal('hide'); // Ukrycie modala usuwania użytkownika
+        });
     },
     // Metoda przełączająca widoczność modalnego okna dodawania listy
     toggleListModal() {
