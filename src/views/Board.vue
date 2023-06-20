@@ -49,7 +49,11 @@
                           <button class="dropdown-item" @click="changeRole(member.id, false)" v-if="member.isAdmin">
                             Make Member
                           </button>
-                          <button class="dropdown-item" @click="showDeleteMemberModal(member.id)">
+                          <button v-if="member.login === this.isCurrentUser" class="dropdown-item"
+                            @click="showLeaveTheBoardModal(member.id)">
+                            Leave Board
+                          </button>
+                          <button v-else class="dropdown-item" @click="showDeleteMemberModal(member.id)">
                             Remove Member
                           </button>
                         </div>
@@ -75,6 +79,26 @@
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                   <button type="button" class="btn btn-danger" @click="deleteMember">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Leave The Board Modal -->
+          <div class="modal fade" id="leave-board-modal" tabindex="-1" role="dialog"
+            aria-labelledby="leave-board-modal-label" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="leave-board-modal-label">
+                    Confirm Leaving the Board</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  Are you sure you want to leave this board?
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-danger" @click="leaveBoard">Leave</button>
                 </div>
               </div>
             </div>
@@ -899,6 +923,10 @@ export default {
       this.memberIdToDelete = memberId; // Przypisanie memberId do zmiennej wewnątrz komponentu
       $('#delete-member-modal').modal('show'); // Wyświetlenie modala usuwania użytkownika
     },
+    showLeaveTheBoardModal(memberId) {
+      this.memberIdToDelete = memberId; // Przypisanie memberId do zmiennej wewnątrz komponentu
+      $('#leave-board-modal').modal('show'); // Wyświetlenie modala usuwania użytkownika
+    },
     async deleteMember() {
       const token = localStorage.getItem('token'); // Pobranie tokenu z localStorage
 
@@ -932,6 +960,14 @@ export default {
         .finally(() => {
           $('#delete-member-modal').modal('hide'); // Ukrycie modala usuwania użytkownika
         });
+    },
+    async leaveBoard() {
+      this.deleteMember();
+      // Wyświetlanie komunikatu typu toast
+      this.toast.success('Successfully left the board');
+      $('#leave-board-modal').modal('hide'); // Ukrycie modala usuwania użytkownika
+      // Przekierowanie użytkownika na stronę główną
+      this.$router.push('/');
     },
     // Metoda przełączająca widoczność modalnego okna dodawania listy
     toggleListModal() {
